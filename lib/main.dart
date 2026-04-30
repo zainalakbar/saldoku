@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'calculator_sheet.dart';
 
 void main() {
   runApp(const MyApp());
@@ -60,7 +61,7 @@ class DashboardScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildBalanceCards(context),
                       const SizedBox(height: 24),
-                      _buildFeatures(),
+                      _buildFeatures(context),
                       const SizedBox(height: 24),
                       _buildMonthlySummary(),
                       const SizedBox(height: 24),
@@ -652,7 +653,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatures() {
+  Widget _buildFeatures(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -667,7 +668,17 @@ class DashboardScreen extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildFeatureIcon(Icons.calculate, 'Kalkulator', const Color(0xFF1E60FE), Colors.blue.shade50),
+              _buildFeatureIcon(
+                Icons.calculate, 'Kalkulator', const Color(0xFF1E60FE), Colors.blue.shade50,
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const CalculatorSheet(),
+                  );
+                },
+              ),
               _buildFeatureIcon(Icons.receipt_long, 'Split Bill', const Color(0xFF607D8B), Colors.blueGrey.shade50),
               _buildFeatureIcon(Icons.savings, 'Budgeting', const Color(0xFF333333), Colors.grey.shade200),
             ],
@@ -698,35 +709,38 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureIcon(IconData icon, String label, Color color, Color bgColor) {
-    return Container(
-      width: 76,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      child: Column(
-        children: [
-          Container(
-            height: 54,
-            width: 54,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.15),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+  Widget _buildFeatureIcon(IconData icon, String label, Color color, Color bgColor, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 76,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        child: Column(
+          children: [
+            Container(
+              height: 54,
+              width: 54,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: color, size: 30),
             ),
-            child: Icon(icon, color: color, size: 30),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF4A4A4A), fontWeight: FontWeight.w500, height: 1.2),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF4A4A4A), fontWeight: FontWeight.w500, height: 1.2),
+            ),
+          ],
+        ),
       ),
     );
   }
