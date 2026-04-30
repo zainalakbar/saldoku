@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'calculator_sheet.dart';
 import 'statistik_screen.dart';
+import 'split_bill_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -786,7 +787,15 @@ class DashboardScreen extends StatelessWidget {
                   );
                 },
               ),
-              _buildFeatureIcon(Icons.receipt_long, 'Split Bill', const Color(0xFF607D8B), Colors.blueGrey.shade50),
+              _buildFeatureIcon(
+                Icons.receipt_long, 'Split Bill', const Color(0xFF607D8B), Colors.blueGrey.shade50,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SplitBillScreen()),
+                  );
+                },
+              ),
               _buildFeatureIcon(Icons.savings, 'Budgeting', const Color(0xFF333333), Colors.grey.shade200),
             ],
           ),
