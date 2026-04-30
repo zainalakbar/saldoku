@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'calculator_sheet.dart';
+import 'statistik_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,7 +20,127 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
         scaffoldBackgroundColor: const Color(0xFFF2F5FB),
       ),
-      home: const DashboardScreen(),
+      home: const MainScreen(),
+    );
+  }
+}
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _screens = [
+    const DashboardScreen(),
+    const Center(child: Text('Thread Screen Placeholder')), // Thread
+    const Center(child: Text('')), // Placeholder for FAB space
+    const StatistikScreen(), // Statistik
+    const Center(child: Text('Akun Screen Placeholder')), // Akun
+  ];
+
+  void _onItemTapped(int index) {
+    if (index == 2) return; // Ignore the empty space for FAB
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          _screens[_selectedIndex],
+          // Custom Bottom Nav
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildBottomNav(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildNavItem(Icons.home_filled, 'Home', 0),
+              _buildNavItem(Icons.chat_bubble_outline, 'Thread', 1),
+              const SizedBox(width: 40), // Space for FAB
+              _buildNavItem(Icons.pie_chart_outline, 'Statistik', 3),
+              _buildNavItem(Icons.person_outline, 'Akun', 4),
+            ],
+          ),
+        ),
+        Positioned(
+          bottom: 20,
+          child: Container(
+            height: 64,
+            width: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E60FE),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E60FE).withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.add, color: Colors.white, size: 32),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final isActive = _selectedIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onItemTapped(index),
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isActive ? const Color(0xFF1E60FE) : const Color(0xFF9CA3AF), size: 26),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: isActive ? const Color(0xFF1E60FE) : const Color(0xFF9CA3AF),
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -29,13 +150,10 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 100),
+      child: Stack(
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 100),
-            child: Stack(
-              children: [
                 // Background Gradient Header (Now scrolls with content)
                 Container(
                   height: 400,
@@ -73,18 +191,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          
-          // Custom Bottom Nav
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomNav(),
-          ),
-        ],
-      ),
-    );
+          );
   }
 
   Widget _buildHeader() {
@@ -1004,74 +1111,4 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomNav() {
-    return Stack(
-      alignment: Alignment.bottomCenter,
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 70,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(Icons.home_filled, 'Home', true),
-              _buildNavItem(Icons.chat_bubble_outline, 'Thread', false),
-              const SizedBox(width: 40), // Space for FAB
-              _buildNavItem(Icons.pie_chart_outline, 'Statistik', false),
-              _buildNavItem(Icons.person_outline, 'Akun', false),
-            ],
-          ),
-        ),
-        Positioned(
-          bottom: 20,
-          child: Container(
-            height: 64,
-            width: 64,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E60FE),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1E60FE).withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.add, color: Colors.white, size: 32),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: isActive ? const Color(0xFF1E60FE) : const Color(0xFF9CA3AF), size: 26),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: isActive ? const Color(0xFF1E60FE) : const Color(0xFF9CA3AF),
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
