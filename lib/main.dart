@@ -238,9 +238,6 @@ class DashboardScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildFeatureIcon(Icons.calculate, 'Kalkulator', const Color(0xFF1E60FE), Colors.blue.shade50),
-              _buildFeatureIcon(Icons.play_circle_fill, 'Kelas\nFinansial', const Color(0xFF00C6FF), Colors.lightBlue.shade50),
-              _buildFeatureIcon(Icons.candlestick_chart, 'Analisa\nSaham', const Color(0xFF4CAF50), Colors.green.shade50),
-              _buildFeatureIcon(Icons.currency_bitcoin, 'Analisa\nCrypto', const Color(0xFFFF9800), Colors.orange.shade50),
               _buildFeatureIcon(Icons.receipt_long, 'Split Bill', const Color(0xFF607D8B), Colors.blueGrey.shade50),
               _buildFeatureIcon(Icons.savings, 'Budgeting', const Color(0xFF333333), Colors.grey.shade200),
             ],
