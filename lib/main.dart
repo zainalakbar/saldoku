@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'calculator_sheet.dart';
 import 'statistik_screen.dart';
@@ -800,27 +801,6 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
         ),
-        // Add indicator line similar to screenshot
-        Padding(
-          padding: const EdgeInsets.only(left: 20.0, top: 10),
-          child: Container(
-            width: 150,
-            height: 3,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-            alignment: Alignment.centerLeft,
-            child: Container(
-              width: 50,
-              height: 3,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade500,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -995,6 +975,23 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildTransactionHistory() {
+    return const TransactionHistorySection();
+  }
+
+}
+
+class TransactionHistorySection extends StatefulWidget {
+  const TransactionHistorySection({super.key});
+
+  @override
+  State<TransactionHistorySection> createState() => _TransactionHistorySectionState();
+}
+
+class _TransactionHistorySectionState extends State<TransactionHistorySection> {
+  bool _isAsetTab = false; // "Hutang" selected by default to show the feature requested
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -1015,28 +1012,47 @@ class DashboardScreen extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
+                child: GestureDetector(
+                  onTap: () => setState(() => _isAsetTab = true),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: _isAsetTab ? BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        )
+                      ],
+                    ) : null,
+                    alignment: Alignment.center,
+                    child: Text('Aset', style: TextStyle(fontWeight: _isAsetTab ? FontWeight.w600 : FontWeight.w500, color: _isAsetTab ? const Color(0xFF0D1C44) : const Color(0xFF6B7280), fontSize: 14)),
                   ),
-                  alignment: Alignment.center,
-                  child: const Text('Aset', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0D1C44), fontSize: 14)),
                 ),
               ),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  alignment: Alignment.center,
-                  child: const Text('Hutang', style: TextStyle(fontWeight: FontWeight.w500, color: Color(0xFF6B7280), fontSize: 14)),
+                child: GestureDetector(
+                  onTap: () => setState(() => _isAsetTab = false),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: !_isAsetTab ? BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        )
+                      ],
+                    ) : null,
+                    alignment: Alignment.center,
+                    child: Text('Hutang', style: TextStyle(fontWeight: !_isAsetTab ? FontWeight.w600 : FontWeight.w500, color: !_isAsetTab ? const Color(0xFF0D1C44) : const Color(0xFF6B7280), fontSize: 14)),
+                  ),
                 ),
               ),
             ],
@@ -1044,80 +1060,203 @@ class DashboardScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         
-        // Empty State Card
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                )
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Header (Icon, 'y', 'Lihat Semua')
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.handyman, color: Colors.blueGrey, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text('y', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
-                      ],
-                    ),
-                    Text('Lihat Semua', style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w600, fontSize: 13)),
-                  ],
-                ),
-                const SizedBox(height: 40),
-                
-                // Illustration (Notepad/Pencil)
-                Icon(Icons.edit_document, size: 80, color: Colors.orange.shade300),
-                const SizedBox(height: 24),
-                
-                // Texts
-                const Text('Belum ada transaksi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF4A4A4A))),
-                const SizedBox(height: 8),
-                const Text('Mulai mencatat transaksi untuk y', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
-                const SizedBox(height: 24),
-                
-                // Button
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E60FE),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text('Catat Transaksi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                ),
-                const SizedBox(height: 10),
-              ],
-            ),
-          ),
+        // Content
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _isAsetTab ? _buildAsetContent() : _buildHutangContent(),
         ),
       ],
     );
   }
 
+  Widget _buildAsetContent() {
+    return Padding(
+      key: const ValueKey('aset'),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Header (Icon, 'y', 'Lihat Semua')
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.handyman, color: Colors.blueGrey, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('y', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                  ],
+                ),
+                Text('Lihat Semua', style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w600, fontSize: 13)),
+              ],
+            ),
+            const SizedBox(height: 40),
+            
+            // Illustration (Notepad/Pencil)
+            Icon(Icons.edit_document, size: 80, color: Colors.orange.shade300),
+            const SizedBox(height: 24),
+            
+            // Texts
+            const Text('Belum ada transaksi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF4A4A4A))),
+            const SizedBox(height: 8),
+            const Text('Mulai mencatat transaksi untuk y', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
+            const SizedBox(height: 24),
+            
+            // Button
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E60FE),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text('Catat Transaksi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHutangContent() {
+    return Padding(
+      key: const ValueKey('hutang'),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            )
+          ],
+        ),
+        child: CustomPaint(
+          painter: DashedRectPainter(
+            color: Colors.grey.shade400,
+            strokeWidth: 1.2,
+            gap: 6.0,
+            borderRadius: 16.0,
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text('📋', style: TextStyle(fontSize: 54)),
+                const SizedBox(height: 24),
+                const Text(
+                  'Belum ada transaksi hutang',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44)),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Mulai mencatat transaksi keuangan Anda\nuntuk melihat riwayat hutang',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.5),
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E60FE),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text('Catat Transaksi Pertama', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DashedRectPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double gap;
+  final double borderRadius;
+
+  DashedRectPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.gap,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    var path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(borderRadius)));
+
+    Path dashPath = Path();
+    double distance = 0.0;
+    for (ui.PathMetric pathMetric in path.computeMetrics()) {
+      while (distance < pathMetric.length) {
+        dashPath.addPath(
+          pathMetric.extractPath(distance, distance + gap),
+          Offset.zero,
+        );
+        distance += gap * 2;
+      }
+      distance = 0.0; // reset for next metric just in case
+    }
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
 }
