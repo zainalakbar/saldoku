@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'calculator_sheet.dart';
 import 'statistik_screen.dart';
 import 'split_bill_screen.dart';
+import 'notes_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -39,7 +40,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const Center(child: Text('Notes Screen Placeholder')), // Notes
+    const NotesScreen(), // Notes
     const Center(child: Text('')), // Placeholder for FAB space
     const StatistikScreen(), // Statistik
     const Center(child: Text('Akun Screen Placeholder')), // Akun
