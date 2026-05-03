@@ -798,7 +798,7 @@ class DashboardScreen extends StatelessWidget {
                   );
                 },
               ),
-              _buildFeatureIcon(Icons.savings, 'Budgeting', const Color(0xFF333333), Colors.grey.shade200),
+              _buildFeatureIcon(Icons.savings, 'Tabungan', const Color(0xFF333333), Colors.grey.shade200),
             ],
           ),
         ),
