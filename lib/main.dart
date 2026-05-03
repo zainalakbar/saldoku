@@ -280,7 +280,7 @@ class DashboardScreen extends StatelessWidget {
               iconBgColor: const Color(0xFFF0F0F0),
               title: 'Pengeluaran',
               amount: 'Rp0',
-              onTap: () => _showHutangBottomSheet(context),
+              onTap: () {},
             ),
           ],
         ),
@@ -630,7 +630,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  void _showHutangBottomSheet(BuildContext context) {
+  void _showTabunganBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -663,7 +663,7 @@ class DashboardScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total Hutang', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                  const Text('Total Tabungan', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
@@ -705,7 +705,7 @@ class DashboardScreen extends StatelessWidget {
                         children: [
                           Icon(Icons.add_circle_outline, color: Color(0xFF1E60FE), size: 16),
                           SizedBox(width: 4),
-                          Text('Hutang', style: TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text('Tabungan', style: TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.bold, fontSize: 13)),
                         ],
                       ),
                     ),
@@ -735,9 +735,9 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     Icon(Icons.assignment, size: 60, color: Colors.orange.shade300), // Clipboard icon
                     const SizedBox(height: 20),
-                    const Text('Belum ada hutang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                    const Text('Belum ada tabungan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
                     const SizedBox(height: 8),
-                    const Text('Anda belum memiliki catatan hutang', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                    const Text('Anda belum memiliki catatan tabungan', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {},
@@ -750,7 +750,7 @@ class DashboardScreen extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text('Catat Hutang Pertama', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      child: const Text('Catat Tabungan Pertama', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     ),
                   ],
                 ),
@@ -798,7 +798,10 @@ class DashboardScreen extends StatelessWidget {
                   );
                 },
               ),
-              _buildFeatureIcon(Icons.savings, 'Tabungan', const Color(0xFF333333), Colors.grey.shade200),
+              _buildFeatureIcon(
+                Icons.savings, 'Tabungan', const Color(0xFF333333), Colors.grey.shade200,
+                onTap: () => _showTabunganBottomSheet(context),
+              ),
             ],
           ),
         ),
