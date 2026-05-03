@@ -271,7 +271,7 @@ class DashboardScreen extends StatelessWidget {
               iconBgColor: const Color(0xFFE8F0FF),
               title: 'Pemasukan',
               amount: 'Rp0',
-              onTap: () => _showAsetBottomSheet(context),
+              onTap: () {},
             ),
             const SizedBox(height: 12),
             _buildBalanceItem(
