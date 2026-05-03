@@ -39,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const Center(child: Text('Thread Screen Placeholder')), // Thread
+    const Center(child: Text('Notes Screen Placeholder')), // Notes
     const Center(child: Text('')), // Placeholder for FAB space
     const StatistikScreen(), // Statistik
     const Center(child: Text('Akun Screen Placeholder')), // Akun
@@ -91,7 +91,7 @@ class _MainScreenState extends State<MainScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildNavItem(Icons.home_filled, 'Home', 0),
-              _buildNavItem(Icons.chat_bubble_outline, 'Thread', 1),
+              _buildNavItem(Icons.note_alt_outlined, 'Notes', 1),
               const SizedBox(width: 40), // Space for FAB
               _buildNavItem(Icons.pie_chart_outline, 'Statistik', 3),
               _buildNavItem(Icons.person_outline, 'Akun', 4),
@@ -185,7 +185,7 @@ class DashboardScreen extends StatelessWidget {
                       const SizedBox(height: 24),
                       _buildMonthlySummary(),
                       const SizedBox(height: 24),
-                      _buildThreadSection(),
+                      _buildNotesSection(),
                       const SizedBox(height: 24),
                       _buildTransactionHistory(),
                     ],
@@ -908,7 +908,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildThreadSection() {
+  Widget _buildNotesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -917,7 +917,7 @@ class DashboardScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Thread', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0D1C44))),
+              const Text('Notes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0D1C44))),
               Text('Lihat Semua', style: TextStyle(fontSize: 13, color: const Color(0xFF1E60FE), fontWeight: FontWeight.w600)),
             ],
           ),
@@ -928,8 +928,8 @@ class DashboardScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              _buildThreadCard(),
-              _buildThreadCard(),
+              _buildNotesCard(),
+              _buildNotesCard(),
             ],
           ),
         ),
@@ -938,7 +938,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildThreadCard() {
+  Widget _buildNotesCard() {
     return Container(
       width: 200,
       margin: const EdgeInsets.symmetric(horizontal: 4),
