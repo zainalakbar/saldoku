@@ -2,22 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-
-class ExpenseNote {
-  final String id;
-  final String title;
-  final double amount;
-  final DateTime date;
-  final String? imagePath;
-
-  ExpenseNote({
-    required this.id,
-    required this.title,
-    required this.amount,
-    required this.date,
-    this.imagePath,
-  });
-}
+import 'package:provider/provider.dart';
+import 'logic/transaction_model.dart';
+import 'logic/transaction_provider.dart';
 
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
@@ -27,27 +14,21 @@ class NotesScreen extends StatefulWidget {
 }
 
 class _NotesScreenState extends State<NotesScreen> {
-  List<ExpenseNote> _notes = [];
-
   void _showAddNoteSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => AddNoteSheet(
-        onAdd: (note) {
-          setState(() {
-            _notes.add(note);
-            // Sort descending by date
-            _notes.sort((a, b) => b.date.compareTo(a.date));
-          });
-        },
-      ),
+      builder: (context) => const AddNoteSheet(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<TransactionProvider>(context);
+    final notes = provider.transactions.where((t) => t.imagePath != null).toList();
+    notes.sort((a, b) => b.date.compareTo(a.date));
+    
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
     return Scaffold(
@@ -66,7 +47,7 @@ class _NotesScreenState extends State<NotesScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: _notes.isEmpty
+      body: notes.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -93,9 +74,9 @@ class _NotesScreenState extends State<NotesScreen> {
             )
           : ListView.builder(
               padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 100),
-              itemCount: _notes.length,
+              itemCount: notes.length,
               itemBuilder: (context, index) {
-                final note = _notes[index];
+                final note = notes[index];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
@@ -154,7 +135,7 @@ class _NotesScreenState extends State<NotesScreen> {
                             ),
                             Text(
                               currencyFormatter.format(note.amount),
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFF5252)),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: note.type == TransactionType.income ? Colors.green : const Color(0xFFFF5252)),
                             ),
                           ],
                         ),
@@ -169,9 +150,7 @@ class _NotesScreenState extends State<NotesScreen> {
 }
 
 class AddNoteSheet extends StatefulWidget {
-  final Function(ExpenseNote) onAdd;
-
-  const AddNoteSheet({super.key, required this.onAdd});
+  const AddNoteSheet({super.key});
 
   @override
   State<AddNoteSheet> createState() => _AddNoteSheetState();
@@ -206,15 +185,17 @@ class _AddNoteSheetState extends State<AddNoteSheet> {
 
     final amount = double.tryParse(_amountController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0.0;
 
-    final note = ExpenseNote(
+    final transaction = Transaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleController.text,
       amount: amount,
       date: DateTime.now(),
+      type: TransactionType.expense,
+      category: AppCategories.expenseCategories.last, // "Lainnya"
       imagePath: _selectedImage?.path,
     );
 
-    widget.onAdd(note);
+    Provider.of<TransactionProvider>(context, listen: false).addTransaction(transaction);
     Navigator.pop(context);
   }
 

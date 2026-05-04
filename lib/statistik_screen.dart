@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'logic/transaction_model.dart';
+import 'logic/transaction_provider.dart';
+import 'transaction_detail_screen.dart';
+import 'package:intl/intl.dart';
 
 class StatistikScreen extends StatelessWidget {
   const StatistikScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<TransactionProvider>(context);
+    final now = DateTime.now();
+    final monthlyIncome = provider.getMonthlyIncome(now.month, now.year);
+    final monthlyExpense = provider.getMonthlyExpense(now.month, now.year);
+    final cashFlow = monthlyIncome - monthlyExpense;
+    final cashFlowPercent = monthlyIncome > 0 ? (cashFlow / monthlyIncome * 100).toStringAsFixed(0) : '0';
+    
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 100),
       child: Stack(
@@ -40,52 +54,82 @@ class StatistikScreen extends StatelessWidget {
                   const Text('SALDO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF), letterSpacing: 1.5)),
                   const SizedBox(height: 16),
                   
-                  // Empty Chart State
-                  Container(
-                    height: 150,
-                    width: double.infinity,
-                    alignment: Alignment.center,
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('Belum ada transaksi.', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-                        SizedBox(height: 4),
-                        Text('Grafik akan muncul setelah ada transaksi.', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
-                      ],
+                  // Simple Visualizer (Progress bar like)
+                  if (monthlyIncome > 0 || monthlyExpense > 0)
+                    _buildSimpleChart(monthlyIncome, monthlyExpense)
+                  else
+                    // Empty Chart State
+                    Container(
+                      height: 150,
+                      width: double.infinity,
+                      alignment: Alignment.center,
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Belum ada transaksi.', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                          SizedBox(height: 4),
+                          Text('Grafik akan muncul setelah ada transaksi.', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
+                        ],
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 24),
                   
                   // Month Selector
-                  _buildMonthSelector(),
+                  _buildMonthSelector(provider),
                   const SizedBox(height: 24),
                   
                   // Summary Cards
-                  _buildSummaryItem(icon: Icons.south_west, iconColor: const Color(0xFF1E60FE), iconBgColor: const Color(0xFFE8F0FF), title: 'Pendapatan bulan ini', amount: 'Rp0'),
+                  _buildSummaryItem(
+                    context: context,
+                    icon: Icons.south_west, 
+                    iconColor: const Color(0xFF1E60FE), 
+                    iconBgColor: const Color(0xFFE8F0FF), 
+                    title: 'Pendapatan bulan ini', 
+                    amount: currencyFormatter.format(monthlyIncome),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Pendapatan Bulan Ini')),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 16),
-                  _buildSummaryItem(icon: Icons.north_east, iconColor: const Color(0xFFE53935), iconBgColor: const Color(0xFFFFEBEE), title: 'Pengeluaran bulan ini', amount: 'Rp0'),
+                  _buildSummaryItem(
+                    context: context,
+                    icon: Icons.north_east, 
+                    iconColor: const Color(0xFFE53935), 
+                    iconBgColor: const Color(0xFFFFEBEE), 
+                    title: 'Pengeluaran bulan ini', 
+                    amount: currencyFormatter.format(monthlyExpense),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Pengeluaran Bulan Ini')),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 16),
                   
                   // Asset & Debt Cards
                   Row(
                     children: [
                       Expanded(
-                        child: _buildSmallBalanceCard(icon: Icons.account_balance_wallet, iconColor: const Color(0xFF1E60FE), iconBgColor: const Color(0xFFE8F0FF), title: 'Total Aset', amount: 'Rp0'),
+                        child: _buildSmallBalanceCard(icon: Icons.account_balance_wallet, iconColor: const Color(0xFF1E60FE), iconBgColor: const Color(0xFFE8F0FF), title: 'Total Aset', amount: currencyFormatter.format(provider.totalIncome)),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildSmallBalanceCard(icon: Icons.credit_card, iconColor: const Color(0xFF4A4A4A), iconBgColor: const Color(0xFFF0F0F0), title: 'Total Hutang', amount: 'Rp0'),
+                        child: _buildSmallBalanceCard(icon: Icons.credit_card, iconColor: const Color(0xFF4A4A4A), iconBgColor: const Color(0xFFF0F0F0), title: 'Total Hutang', amount: currencyFormatter.format(provider.totalExpense)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   
                   // Cash Flow Card
-                  _buildCashFlowCard(),
+                  _buildCashFlowCard(currencyFormatter.format(cashFlow), cashFlowPercent),
                   const SizedBox(height: 32),
                   
                   // Financial Planner
-                  _buildFinancialPlanner(),
+                  _buildFinancialPlanner(monthlyIncome, monthlyExpense),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -96,7 +140,11 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMonthSelector() {
+  Widget _buildMonthSelector(TransactionProvider provider) {
+    final now = DateTime.now();
+    final count = provider.getTransactionsByMonth(now.month, now.year).length;
+    final monthName = DateFormat('MMMM yyyy').format(now);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -111,10 +159,10 @@ class StatistikScreen extends StatelessWidget {
         children: [
           const Icon(Icons.chevron_left, color: Color(0xFF0D1C44)),
           Column(
-            children: const [
-              Text('April 2026', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
-              SizedBox(height: 2),
-              Text('0 transaksi', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+            children: [
+              Text(monthName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+              const SizedBox(height: 2),
+              Text('$count transaksi', style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
             ],
           ),
           const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
@@ -123,27 +171,30 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryItem({required IconData icon, required Color iconColor, required Color iconBgColor, required String title, required String amount}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: iconBgColor, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(child: Text(title, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w500))),
-          Text(amount, style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(width: 8),
-          const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF), size: 18),
-        ],
+  Widget _buildSummaryItem({required BuildContext context, required IconData icon, required Color iconColor, required Color iconBgColor, required String title, required String amount, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: iconBgColor, shape: BoxShape.circle),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: Text(title, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w500))),
+            Text(amount, style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(width: 8),
+            const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF), size: 18),
+          ],
+        ),
       ),
     );
   }
@@ -179,7 +230,8 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCashFlowCard() {
+  Widget _buildCashFlowCard(String amount, String percent) {
+    final isPositive = !amount.startsWith('-');
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -202,15 +254,86 @@ class StatistikScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const Text('+Rp0', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.w800, fontSize: 24)),
+          Text('${isPositive ? '+' : ''}$amount', style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.w800, fontSize: 24)),
           const SizedBox(height: 4),
-          const Text('0% dari pemasukan tersisa', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12)),
+          Text('$percent% dari pemasukan tersisa', style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _buildFinancialPlanner() {
+  Widget _buildSimpleChart(double income, double expense) {
+    final total = income + expense;
+    final incomeWidth = total > 0 ? (income / total) : 0.5;
+    
+    return Container(
+      height: 150,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              Text('Distribusi Keuangan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0D1C44))),
+              Text('Bulan Ini', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+            ],
+          ),
+          const SizedBox(height: 24),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              height: 20,
+              child: Row(
+                children: [
+                  Expanded(flex: (incomeWidth * 100).toInt(), child: Container(color: const Color(0xFF1E60FE))),
+                  Expanded(flex: ((1 - incomeWidth) * 100).toInt(), child: Container(color: const Color(0xFFFF5252))),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _buildLegend(const Color(0xFF1E60FE), 'Pemasukan'),
+              const SizedBox(width: 24),
+              _buildLegend(const Color(0xFFFF5252), 'Pengeluaran'),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegend(Color color, String label) {
+    return Row(
+      children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+      ],
+    );
+  }
+
+  Widget _buildFinancialPlanner(double income, double expense) {
+    final expenseRatio = income > 0 ? (expense / income) : 0.0;
+    final savingCapacity = income > 0 ? ((income - expense) / income) : 0.0;
+    
+    // Simple health score logic
+    int healthScore = 50;
+    if (income > 0) {
+      if (expenseRatio < 0.5) healthScore += 25;
+      else if (expenseRatio < 0.7) healthScore += 15;
+      
+      if (savingCapacity > 0.2) healthScore += 25;
+      else if (savingCapacity > 0.1) healthScore += 15;
+    }
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -265,17 +388,20 @@ class StatistikScreen extends StatelessWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('Financial Health Score', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 15)),
-                        SizedBox(height: 8),
-                        Text('Bagus! Keuangan Anda dalam kondisi baik', style: TextStyle(color: Color(0xFF6B7280), fontSize: 13, height: 1.4)),
+                      children: [
+                        const Text('Financial Health Score', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 15)),
+                        const SizedBox(height: 8),
+                        Text(
+                          healthScore > 70 ? 'Bagus! Keuangan Anda dalam kondisi baik' : 'Ayo tingkatkan kapasitas menabung Anda!',
+                          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, height: 1.4),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 16),
                   Column(
                     children: [
-                      const Text('75', style: TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.w800, fontSize: 32)),
+                      Text('$healthScore', style: const TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.w800, fontSize: 32)),
                       const Text('/ 100', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
                       const SizedBox(height: 8),
                       Container(
@@ -284,7 +410,7 @@ class StatistikScreen extends StatelessWidget {
                         decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(3)),
                         alignment: Alignment.centerLeft,
                         child: Container(
-                          width: 37.5,
+                          width: (healthScore / 100) * 50,
                           height: 6,
                           decoration: BoxDecoration(color: const Color(0xFF1E60FE), borderRadius: BorderRadius.circular(3)),
                         ),
@@ -302,7 +428,7 @@ class StatistikScreen extends StatelessWidget {
               children: [
                 Expanded(child: _buildMetricCard(title: 'Debt Ratio', value: '0.00x', target: '< 0.5x', isGood: true, icon: Icons.arrow_outward)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildMetricCard(title: 'Expense\nRatio', value: '0%', target: '< 70%', isGood: true, icon: Icons.arrow_outward)),
+                Expanded(child: _buildMetricCard(title: 'Expense\nRatio', value: '${(expenseRatio * 100).toStringAsFixed(0)}%', target: '< 70%', isGood: expenseRatio < 0.7, icon: expenseRatio < 0.7 ? Icons.arrow_outward : Icons.south_east)),
               ],
             ),
           ),
@@ -311,7 +437,7 @@ class StatistikScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Row(
               children: [
-                Expanded(child: _buildMetricCard(title: 'Saving\nCapacity', value: '0%', target: '> 20%', isGood: false, icon: Icons.south_east)),
+                Expanded(child: _buildMetricCard(title: 'Saving\nCapacity', value: '${(savingCapacity * 100).toStringAsFixed(0)}%', target: '> 20%', isGood: savingCapacity > 0.2, icon: savingCapacity > 0.2 ? Icons.arrow_outward : Icons.south_east)),
                 const SizedBox(width: 12),
                 Expanded(child: _buildMetricCard(title: 'Asset\nCoverage', value: 'No Debt', target: '> 1.5x', isGood: true, icon: Icons.arrow_outward)),
               ],

@@ -22,6 +22,7 @@ class Transaction {
   final TransactionType type;
   final TransactionCategory category;
   final String? note;
+  final String? imagePath;
 
   Transaction({
     required this.id,
@@ -31,6 +32,7 @@ class Transaction {
     required this.type,
     required this.category,
     this.note,
+    this.imagePath,
   });
 }
 

@@ -296,12 +296,7 @@ class DashboardScreen extends StatelessWidget {
               iconBgColor: const Color(0xFFE8F0FF),
               title: 'Pemasukan',
               amount: currencyFormatter.format(provider.totalIncome),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Total Pemasukan')),
-                );
-              },
+              onTap: null,
             ),
             const SizedBox(height: 12),
             _buildBalanceItem(
@@ -310,12 +305,7 @@ class DashboardScreen extends StatelessWidget {
               iconBgColor: const Color(0xFFF0F0F0),
               title: 'Pengeluaran',
               amount: currencyFormatter.format(provider.totalExpense),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Total Pengeluaran')),
-                );
-              },
+              onTap: null,
             ),
           ],
         ),
@@ -367,7 +357,7 @@ class DashboardScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
+            if (onTap != null) const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
           ],
         ),
       ),
