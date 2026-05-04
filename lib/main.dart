@@ -4,6 +4,13 @@ import 'calculator_sheet.dart';
 import 'statistik_screen.dart';
 import 'split_bill_screen.dart';
 import 'notes_screen.dart';
+import 'akun_screen.dart';
+import 'package:provider/provider.dart';
+import 'logic/transaction_model.dart';
+import 'logic/transaction_provider.dart';
+import 'add_transaction_sheet.dart';
+import 'transaction_detail_screen.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,16 +21,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Saldoku',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E60FE)),
-        useMaterial3: true,
-        fontFamily: 'Inter',
-        scaffoldBackgroundColor: const Color(0xFFF2F5FB),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Saldoku',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E60FE)),
+          useMaterial3: true,
+          fontFamily: 'Inter',
+          scaffoldBackgroundColor: const Color(0xFFF2F5FB),
+        ),
+        home: const MainScreen(),
       ),
-      home: const MainScreen(),
     );
   }
 }
@@ -43,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
     const NotesScreen(), // Notes
     const Center(child: Text('')), // Placeholder for FAB space
     const StatistikScreen(), // Statistik
-    const Center(child: Text('Akun Screen Placeholder')), // Akun
+    const AkunScreen(), // Akun
   ];
 
   void _onItemTapped(int index) {
@@ -101,21 +113,31 @@ class _MainScreenState extends State<MainScreen> {
         ),
         Positioned(
           bottom: 20,
-          child: Container(
-            height: 64,
-            width: 64,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E60FE),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1E60FE).withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+          child: GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const AddTransactionSheet(),
+              );
+            },
+            child: Container(
+              height: 64,
+              width: 64,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E60FE),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1E60FE).withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 32),
             ),
-            child: const Icon(Icons.add, color: Colors.white, size: 32),
           ),
         ),
       ],
@@ -184,7 +206,7 @@ class DashboardScreen extends StatelessWidget {
                       const SizedBox(height: 24),
                       _buildFeatures(context),
                       const SizedBox(height: 24),
-                      _buildMonthlySummary(),
+                      _buildMonthlySummary(context),
                       const SizedBox(height: 24),
                       _buildNotesSection(),
                       const SizedBox(height: 24),
@@ -247,6 +269,9 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildBalanceCards(BuildContext context) {
+    final provider = Provider.of<TransactionProvider>(context);
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
@@ -270,8 +295,13 @@ class DashboardScreen extends StatelessWidget {
               iconColor: const Color(0xFF1E60FE),
               iconBgColor: const Color(0xFFE8F0FF),
               title: 'Pemasukan',
-              amount: 'Rp0',
-              onTap: () {},
+              amount: currencyFormatter.format(provider.totalIncome),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Total Pemasukan')),
+                );
+              },
             ),
             const SizedBox(height: 12),
             _buildBalanceItem(
@@ -279,8 +309,13 @@ class DashboardScreen extends StatelessWidget {
               iconColor: const Color(0xFF4A4A4A),
               iconBgColor: const Color(0xFFF0F0F0),
               title: 'Pengeluaran',
-              amount: 'Rp0',
-              onTap: () {},
+              amount: currencyFormatter.format(provider.totalExpense),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Total Pengeluaran')),
+                );
+              },
             ),
           ],
         ),
@@ -845,7 +880,13 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMonthlySummary() {
+  Widget _buildMonthlySummary(BuildContext context) {
+    final provider = Provider.of<TransactionProvider>(context);
+    final now = DateTime.now();
+    final monthlyIncome = provider.getMonthlyIncome(now.month, now.year);
+    final monthlyExpense = provider.getMonthlyExpense(now.month, now.year);
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
@@ -855,7 +896,13 @@ class DashboardScreen extends StatelessWidget {
             iconColor: const Color(0xFF1E60FE),
             iconBgColor: const Color(0xFFE8F0FF),
             title: 'Pendapatan bulanan ini',
-            amount: 'Rp0',
+            amount: currencyFormatter.format(monthlyIncome),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Pendapatan Bulan Ini')),
+              );
+            },
           ),
           const SizedBox(height: 12),
           _buildSummaryItem(
@@ -863,7 +910,13 @@ class DashboardScreen extends StatelessWidget {
             iconColor: const Color(0xFFFF5252),
             iconBgColor: const Color(0xFFFFEBEE),
             title: 'Pengeluaran bulan ini',
-            amount: 'Rp0',
+            amount: currencyFormatter.format(monthlyExpense),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Pengeluaran Bulan Ini')),
+              );
+            },
           ),
         ],
       ),
@@ -876,9 +929,12 @@ class DashboardScreen extends StatelessWidget {
     required Color iconBgColor,
     required String title,
     required String amount,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -909,7 +965,7 @@ class DashboardScreen extends StatelessWidget {
           const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF), size: 20),
         ],
       ),
-    );
+    ),);
   }
 
   Widget _buildNotesSection() {

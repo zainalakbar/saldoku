@@ -1,0 +1,358 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'logic/transaction_model.dart';
+import 'logic/transaction_provider.dart';
+
+class AddTransactionSheet extends StatefulWidget {
+  const AddTransactionSheet({super.key});
+
+  @override
+  State<AddTransactionSheet> createState() => _AddTransactionSheetState();
+}
+
+class _AddTransactionSheetState extends State<AddTransactionSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _amountController = TextEditingController();
+  
+  TransactionType _type = TransactionType.expense;
+  TransactionCategory? _selectedCategory;
+  DateTime _selectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = AppCategories.expenseCategories.first;
+  }
+
+  void _saveTransaction() {
+    if (_formKey.currentState!.validate() && _selectedCategory != null) {
+      final amountText = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      final amount = double.tryParse(amountText) ?? 0.0;
+
+      if (amount <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nominal harus lebih dari 0')),
+        );
+        return;
+      }
+
+      final transaction = Transaction(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: _titleController.text,
+        amount: amount,
+        date: _selectedDate,
+        type: _type,
+        category: _selectedCategory!,
+      );
+
+      Provider.of<TransactionProvider>(context, listen: false).addTransaction(transaction);
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF1E60FE),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF0D1C44),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: 24,
+        left: 24,
+        right: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Catat Transaksi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+                      child: const Icon(Icons.close, size: 18, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Type Toggle
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F5FB),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    _buildTypeButton(TransactionType.expense, 'Pengeluaran'),
+                    _buildTypeButton(TransactionType.income, 'Pemasukan'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Amount Input
+              const Text('Nominal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _amountController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44)),
+                decoration: const InputDecoration(
+                  prefixText: 'Rp ',
+                  prefixStyle: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44)),
+                  border: InputBorder.none,
+                  hintText: '0',
+                ),
+                validator: (value) => value!.isEmpty ? 'Masukkan nominal' : null,
+              ),
+              const Divider(thickness: 1.2),
+              const SizedBox(height: 24),
+
+              // Description
+              const Text('Keterangan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  hintText: 'Beli apa hari ini?',
+                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderBorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+                validator: (value) => value!.isEmpty ? 'Masukkan keterangan' : null,
+              ),
+              const SizedBox(height: 24),
+
+              // Category & Date Row
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Kategori', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: _showCategoryPicker,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(_selectedCategory?.icon ?? Icons.category, color: _selectedCategory?.color ?? Colors.grey, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _selectedCategory?.name ?? 'Pilih',
+                                    style: const TextStyle(fontSize: 14, color: Color(0xFF0D1C44), fontWeight: FontWeight.w500),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF9CA3AF)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Tanggal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: _pickDate,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today, color: Color(0xFF1E60FE), size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    DateFormat('dd/MM/yy').format(_selectedDate),
+                                    style: const TextStyle(fontSize: 14, color: Color(0xFF0D1C44), fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              // Submit Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saveTransaction,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E60FE),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  child: const Text('Simpan Transaksi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTypeButton(TransactionType type, String label) {
+    final isActive = _type == type;
+    final color = type == TransactionType.income ? Colors.green : const Color(0xFFFF5252);
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _type = type;
+            _selectedCategory = type == TransactionType.income 
+                ? AppCategories.incomeCategories.first 
+                : AppCategories.expenseCategories.first;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isActive ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isActive ? [
+              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+            ] : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+              color: isActive ? color : const Color(0xFF9CA3AF),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryPicker() {
+    final categories = _type == TransactionType.income 
+        ? AppCategories.incomeCategories 
+        : AppCategories.expenseCategories;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Pilih Kategori', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+              const SizedBox(height: 24),
+              GridView.builder(
+                shrinkWrap: true,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedCategory = cat);
+                      Navigator.pop(context);
+                    },
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: cat.color.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(cat.icon, color: cat.color, size: 24),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(cat.name, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Fixed BorderSide issue in previous snippet
+class BorderBorderSide {
+  static const none = BorderSide.none;
+}
