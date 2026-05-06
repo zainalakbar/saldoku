@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'logic/transaction_model.dart';
 import 'logic/transaction_provider.dart';
 import 'logic/financial_provider.dart';
+import 'logic/budget_provider.dart';
 import 'logic/financial_models.dart';
 import 'add_transaction_sheet.dart';
 import 'transaction_detail_screen.dart';
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
         ChangeNotifierProvider(create: (_) => FinancialProvider()),
+        ChangeNotifierProvider(create: (_) => BudgetProvider()),
       ],
       child: MaterialApp(
         title: 'Saldoku',
@@ -840,6 +842,159 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  void _showBudgetBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+        final now = DateTime.now();
+        
+        return Consumer2<BudgetProvider, TransactionProvider>(
+          builder: (context, budgetProvider, transProvider, child) {
+            final allCategories = AppCategories.expenseCategories;
+            
+            return Container(
+              padding: const EdgeInsets.only(top: 12, left: 20, right: 20, bottom: 40),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+                  const SizedBox(height: 20),
+                  const Text('Budget Pengeluaran', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                  const Text('Atur batas pengeluaran bulananmu', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const SizedBox(height: 24),
+                  
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: allCategories.length,
+                      itemBuilder: (context, index) {
+                        final cat = allCategories[index];
+                        final budget = budgetProvider.getBudgetForCategory(cat.name, now.month, now.year);
+                        
+                        // Let's filter spending per category
+                        final catSpending = transProvider.transactions
+                            .where((t) => t.type == TransactionType.expense && t.category.name == cat.name && t.date.month == now.month && t.date.year == now.year)
+                            .fold(0.0, (sum, t) => sum + t.amount);
+                            
+                        final usage = budget != null && budget.limitAmount > 0 ? catSpending / budget.limitAmount : 0.0;
+                        final isOver = usage > 1.0;
+                        
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade100),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(color: cat.color.withOpacity(0.1), shape: BoxShape.circle),
+                                      child: Icon(cat.icon, color: cat.color, size: 20),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(cat.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                                          Text(
+                                            budget == null 
+                                              ? 'Belum ada budget' 
+                                              : '${(usage * 100).toStringAsFixed(0)}% terpakai (${currencyFormatter.format(catSpending)})',
+                                            style: TextStyle(fontSize: 12, color: isOver ? Colors.red : Colors.grey),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => _showSetBudgetDialog(context, cat.name, budget?.limitAmount ?? 0),
+                                      child: Text(budget == null ? 'Set' : 'Edit', style: const TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ),
+                                if (budget != null) ...[
+                                  const SizedBox(height: 12),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: usage.clamp(0.0, 1.0),
+                                      backgroundColor: Colors.grey.shade100,
+                                      valueColor: AlwaysStoppedAnimation<Color>(isOver ? Colors.red : (usage > 0.8 ? Colors.orange : cat.color)),
+                                      minHeight: 6,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Limit: ${currencyFormatter.format(budget.limitAmount)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                      if (isOver)
+                                        const Text('Over Budget!', style: TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSetBudgetDialog(BuildContext context, String categoryName, double currentLimit) {
+    final controller = TextEditingController(text: currentLimit > 0 ? currentLimit.toStringAsFixed(0) : '');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Set Budget $categoryName'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'Limit Bulanan', prefixText: 'Rp '),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () {
+              final limit = double.tryParse(controller.text) ?? 0;
+              if (limit >= 0) {
+                final now = DateTime.now();
+                Provider.of<BudgetProvider>(context, listen: false).setBudget(
+                  CategoryBudget(categoryName: categoryName, limitAmount: limit, month: now.month, year: now.year)
+                );
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E60FE), foregroundColor: Colors.white),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showIsiTabunganDialog(BuildContext context, FinancialGoal goal) {
     final amountController = TextEditingController();
     showDialog(
@@ -910,6 +1065,10 @@ class DashboardScreen extends StatelessWidget {
               _buildFeatureIcon(
                 Icons.savings, 'Tabungan', const Color(0xFF333333), Colors.grey.shade200,
                 onTap: () => _showTabunganBottomSheet(context),
+              ),
+              _buildFeatureIcon(
+                Icons.pie_chart, 'Budgeting', const Color(0xFFFF9800), Colors.orange.shade50,
+                onTap: () => _showBudgetBottomSheet(context),
               ),
             ],
           ),

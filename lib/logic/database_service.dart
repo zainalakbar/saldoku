@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await sqfl.openDatabase(
       path,
-      version: 3, // Incremented version to force migration
+      version: 4, // Incremented version to force migration
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE transactions(
@@ -57,10 +57,19 @@ class DatabaseService {
             colorValue INTEGER
           )
         ''');
+        await db.execute('''
+          CREATE TABLE budgets(
+            categoryName TEXT,
+            month INTEGER,
+            year INTEGER,
+            limitAmount REAL,
+            PRIMARY KEY (categoryName, month, year)
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 3) {
-          // Migration to ensure assets and goals tables exist
+        if (oldVersion < 4) {
+          // Migration to ensure assets, goals, and budgets tables exist
           await db.execute('''
             CREATE TABLE IF NOT EXISTS assets(
               id TEXT PRIMARY KEY,
@@ -80,6 +89,15 @@ class DatabaseService {
               deadline TEXT,
               iconCode INTEGER,
               colorValue INTEGER
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS budgets(
+              categoryName TEXT,
+              month INTEGER,
+              year INTEGER,
+              limitAmount REAL,
+              PRIMARY KEY (categoryName, month, year)
             )
           ''');
         }
@@ -144,5 +162,25 @@ class DatabaseService {
   Future<void> deleteGoal(String id) async {
     final db = await database;
     await db.delete('goals', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Budget CRUD
+  Future<void> insertBudget(CategoryBudget budget) async {
+    final db = await database;
+    await db.insert('budgets', budget.toMap(), conflictAlgorithm: sqfl.ConflictAlgorithm.replace);
+  }
+
+  Future<List<CategoryBudget>> getAllBudgets() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('budgets');
+    return List.generate(maps.length, (i) => CategoryBudget.fromMap(maps[i]));
+  }
+
+  Future<void> deleteBudget(String categoryName, int month, int year) async {
+    final db = await database;
+    await db.delete('budgets', 
+      where: 'categoryName = ? AND month = ? AND year = ?', 
+      whereArgs: [categoryName, month, year]
+    );
   }
 }

@@ -87,3 +87,35 @@ class FinancialGoal {
     );
   }
 }
+
+class CategoryBudget {
+  final String categoryName;
+  final double limitAmount;
+  final int month;
+  final int year;
+
+  CategoryBudget({
+    required this.categoryName,
+    required this.limitAmount,
+    required this.month,
+    required this.year,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'categoryName': categoryName,
+      'limitAmount': limitAmount,
+      'month': month,
+      'year': year,
+    };
+  }
+
+  factory CategoryBudget.fromMap(Map<String, dynamic> map) {
+    return CategoryBudget(
+      categoryName: map['categoryName'],
+      limitAmount: (map['limitAmount'] as num).toDouble(),
+      month: map['month'],
+      year: map['year'],
+    );
+  }
+}

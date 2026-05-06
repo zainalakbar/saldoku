@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'logic/transaction_model.dart';
 import 'logic/transaction_provider.dart';
 import 'logic/financial_provider.dart';
+import 'logic/budget_provider.dart';
 import 'transaction_detail_screen.dart';
 import 'package:intl/intl.dart';
 
@@ -131,6 +132,10 @@ class StatistikScreen extends StatelessWidget {
                   _buildCashFlowCard(currencyFormatter.format(cashFlow), cashFlowPercent),
                   const SizedBox(height: 32),
                   
+                  // Budget Status Section
+                  _buildBudgetStatus(context),
+                  const SizedBox(height: 32),
+                  
                   // Financial Planner
                   _buildFinancialPlanner(monthlyIncome, monthlyExpense),
                   const SizedBox(height: 24),
@@ -140,6 +145,84 @@ class StatistikScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBudgetStatus(BuildContext context) {
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+    final now = DateTime.now();
+
+    return Consumer2<BudgetProvider, TransactionProvider>(
+      builder: (context, budgetProvider, transProvider, child) {
+        final activeBudgets = budgetProvider.budgets.where((b) => b.month == now.month && b.year == now.year).toList();
+        
+        if (activeBudgets.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Status Budget', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0D1C44))),
+            const SizedBox(height: 16),
+            ...activeBudgets.map((budget) {
+              final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == budget.categoryName, orElse: () => AppCategories.expenseCategories.last);
+              final catSpending = transProvider.transactions
+                  .where((t) => t.type == TransactionType.expense && t.category.name == budget.categoryName && t.date.month == now.month && t.date.year == now.year)
+                  .fold(0.0, (sum, t) => sum + t.amount);
+              
+              final usage = budget.limitAmount > 0 ? catSpending / budget.limitAmount : 0.0;
+              final isOver = usage > 1.0;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(cat.icon, color: cat.color, size: 18),
+                            const SizedBox(width: 8),
+                            Text(budget.categoryName, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D1C44), fontSize: 14)),
+                          ],
+                        ),
+                        Text(
+                          '${(usage * 100).toStringAsFixed(0)}%',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: isOver ? Colors.red : (usage > 0.8 ? Colors.orange : Colors.green)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: usage.clamp(0.0, 1.0),
+                        backgroundColor: Colors.grey.shade100,
+                        minHeight: 8,
+                        valueColor: AlwaysStoppedAnimation<Color>(isOver ? Colors.red : (usage > 0.8 ? Colors.orange : cat.color)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(currencyFormatter.format(catSpending), style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text('Limit: ${currencyFormatter.format(budget.limitAmount)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        );
+      },
     );
   }
 
