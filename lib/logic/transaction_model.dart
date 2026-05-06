@@ -34,6 +34,35 @@ class Transaction {
     this.note,
     this.imagePath,
   });
+
+  // Convert Transaction to Map for SQLite
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'amount': amount,
+      'date': date.toIso8601String(),
+      'type': type.index, // 0 for income, 1 for expense
+      'categoryName': category.name,
+      'note': note,
+      'imagePath': imagePath,
+    };
+  }
+
+  // Create Transaction from Map
+  factory Transaction.fromMap(Map<String, dynamic> map) {
+    final type = TransactionType.values[map['type']];
+    return Transaction(
+      id: map['id'],
+      title: map['title'],
+      amount: map['amount'],
+      date: DateTime.parse(map['date']),
+      type: type,
+      category: AppCategories.getByName(map['categoryName'], type),
+      note: map['note'],
+      imagePath: map['imagePath'],
+    );
+  }
 }
 
 // Predefined categories

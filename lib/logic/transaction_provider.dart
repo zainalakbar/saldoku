@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'transaction_model.dart';
+import 'database_service.dart';
 
 class TransactionProvider with ChangeNotifier {
   final List<Transaction> _transactions = [];
+  final DatabaseService _dbService = DatabaseService();
+
+  TransactionProvider() {
+    loadTransactions();
+  }
 
   List<Transaction> get transactions => [..._transactions];
 
@@ -46,12 +52,22 @@ class TransactionProvider with ChangeNotifier {
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
-  void addTransaction(Transaction transaction) {
-    _transactions.add(transaction);
+  // Database Methods
+  Future<void> loadTransactions() async {
+    final list = await _dbService.getAllTransactions();
+    _transactions.clear();
+    _transactions.addAll(list);
     notifyListeners();
   }
 
-  void deleteTransaction(String id) {
+  Future<void> addTransaction(Transaction transaction) async {
+    await _dbService.insertTransaction(transaction);
+    _transactions.insert(0, transaction);
+    notifyListeners();
+  }
+
+  Future<void> deleteTransaction(String id) async {
+    await _dbService.deleteTransaction(id);
     _transactions.removeWhere((t) => t.id == id);
     notifyListeners();
   }
