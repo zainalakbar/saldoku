@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'logic/transaction_model.dart';
 import 'logic/transaction_provider.dart';
+import 'logic/financial_provider.dart';
 import 'transaction_detail_screen.dart';
 import 'package:intl/intl.dart';
 
@@ -10,10 +11,12 @@ class StatistikScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<TransactionProvider>(context);
+    final transactionProvider = Provider.of<TransactionProvider>(context);
+    final financialProvider = Provider.of<FinancialProvider>(context);
+    
     final now = DateTime.now();
-    final monthlyIncome = provider.getMonthlyIncome(now.month, now.year);
-    final monthlyExpense = provider.getMonthlyExpense(now.month, now.year);
+    final monthlyIncome = transactionProvider.getMonthlyIncome(now.month, now.year);
+    final monthlyExpense = transactionProvider.getMonthlyExpense(now.month, now.year);
     final cashFlow = monthlyIncome - monthlyExpense;
     final cashFlowPercent = monthlyIncome > 0 ? (cashFlow / monthlyIncome * 100).toStringAsFixed(0) : '0';
     
@@ -75,7 +78,7 @@ class StatistikScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   
                   // Month Selector
-                  _buildMonthSelector(provider),
+                  _buildMonthSelector(transactionProvider),
                   const SizedBox(height: 24),
                   
                   // Summary Cards
@@ -114,11 +117,11 @@ class StatistikScreen extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildSmallBalanceCard(icon: Icons.account_balance_wallet, iconColor: const Color(0xFF1E60FE), iconBgColor: const Color(0xFFE8F0FF), title: 'Total Aset', amount: currencyFormatter.format(provider.totalIncome)),
+                        child: _buildSmallBalanceCard(icon: Icons.account_balance_wallet, iconColor: const Color(0xFF1E60FE), iconBgColor: const Color(0xFFE8F0FF), title: 'Total Aset', amount: currencyFormatter.format(financialProvider.totalAssetAmount)),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildSmallBalanceCard(icon: Icons.credit_card, iconColor: const Color(0xFF4A4A4A), iconBgColor: const Color(0xFFF0F0F0), title: 'Total Hutang', amount: currencyFormatter.format(provider.totalExpense)),
+                        child: _buildSmallBalanceCard(icon: Icons.credit_card, iconColor: const Color(0xFF4A4A4A), iconBgColor: const Color(0xFFF0F0F0), title: 'Total Hutang', amount: currencyFormatter.format(transactionProvider.totalExpense)),
                       ),
                     ],
                   ),

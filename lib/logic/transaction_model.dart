@@ -55,7 +55,7 @@ class Transaction {
     return Transaction(
       id: map['id'],
       title: map['title'],
-      amount: map['amount'],
+      amount: (map['amount'] as num).toDouble(),
       date: DateTime.parse(map['date']),
       type: type,
       category: AppCategories.getByName(map['categoryName'], type),
