@@ -708,11 +708,33 @@ class DashboardScreen extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(goal.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
-                                      Text('${(goal.progress * 100).toStringAsFixed(0)}% terkumpul', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                      Text('${(goal.progress * 100).toStringAsFixed(0)}% terkumpul (${currencyFormatter.format(goal.currentAmount)})', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                                     ],
                                   ),
                                 ),
-                                Text(currencyFormatter.format(goal.targetAmount), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(currencyFormatter.format(goal.targetAmount), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                    const SizedBox(height: 4),
+                                    GestureDetector(
+                                      onTap: () {
+                                        _showIsiTabunganDialog(context, goal);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(color: const Color(0xFFE8F0FF), borderRadius: BorderRadius.circular(12)),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.add, color: Color(0xFF1E60FE), size: 14),
+                                            Text(' Isi', style: TextStyle(color: Color(0xFF1E60FE), fontSize: 11, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
                             const SizedBox(height: 12),
@@ -815,6 +837,38 @@ class DashboardScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  void _showIsiTabunganDialog(BuildContext context, FinancialGoal goal) {
+    final amountController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Isi ${goal.name}'),
+        content: TextField(
+          controller: amountController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Nominal Tabungan',
+            prefixText: 'Rp ',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () {
+              final amount = double.tryParse(amountController.text) ?? 0;
+              if (amount > 0) {
+                Provider.of<FinancialProvider>(context, listen: false).updateGoalAmount(goal.id, amount);
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E60FE), foregroundColor: Colors.white),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
     );
   }
 
