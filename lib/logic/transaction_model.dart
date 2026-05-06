@@ -82,6 +82,7 @@ class AppCategories {
     TransactionCategory(name: 'Kesehatan', icon: Icons.medical_services, color: Colors.red),
     TransactionCategory(name: 'Pendidikan', icon: Icons.school, color: Colors.indigo),
     TransactionCategory(name: 'Tagihan', icon: Icons.receipt, color: Colors.teal),
+    TransactionCategory(name: 'Menabung', icon: Icons.savings, color: Colors.indigo),
     TransactionCategory(name: 'Lainnya', icon: Icons.more_horiz, color: Colors.grey),
   ];
 

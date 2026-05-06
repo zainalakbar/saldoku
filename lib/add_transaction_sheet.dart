@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'logic/transaction_model.dart';
 import 'logic/transaction_provider.dart';
+import 'logic/financial_provider.dart';
+import 'logic/financial_models.dart';
 
 class AddTransactionSheet extends StatefulWidget {
   const AddTransactionSheet({super.key});
@@ -16,9 +18,10 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   
-  TransactionType _type = TransactionType.expense;
+   TransactionType _type = TransactionType.expense;
   TransactionCategory? _selectedCategory;
   DateTime _selectedDate = DateTime.now();
+  FinancialGoal? _selectedGoal;
 
   @override
   void initState() {
@@ -48,6 +51,12 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
       );
 
       Provider.of<TransactionProvider>(context, listen: false).addTransaction(transaction);
+      
+      // If category is "Menabung", also update the goal
+      if (_selectedCategory?.name == 'Menabung' && _selectedGoal != null) {
+        Provider.of<FinancialProvider>(context, listen: false).updateGoalAmount(_selectedGoal!.id, amount);
+      }
+      
       Navigator.pop(context);
     }
   }
@@ -234,6 +243,58 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                   ),
                 ],
               ),
+              const SizedBox(height: 24),
+
+              // Goal Selector for "Menabung" category
+              if (_selectedCategory?.name == 'Menabung') ...[
+                const Text('Pilih Target Tabungan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                const SizedBox(height: 8),
+                Consumer<FinancialProvider>(
+                  builder: (context, finProvider, child) {
+                    final goals = finProvider.goals;
+                    if (goals.isEmpty) {
+                      return const Text('Belum ada target tabungan. Buat dulu di Dashboard!', style: TextStyle(fontSize: 12, color: Colors.red));
+                    }
+                    
+                    // Auto-select first goal if none selected
+                    if (_selectedGoal == null && goals.isNotEmpty) {
+                      _selectedGoal = goals.first;
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<FinancialGoal>(
+                          value: _selectedGoal,
+                          isExpanded: true,
+                          hint: const Text('Pilih Target'),
+                          items: goals.map((goal) {
+                            return DropdownMenuItem(
+                              value: goal,
+                              child: Row(
+                                children: [
+                                  Icon(goal.icon, color: goal.color, size: 18),
+                                  const SizedBox(width: 12),
+                                  Text(goal.name),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (goal) {
+                            setState(() => _selectedGoal = goal);
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+              ],
+
               const SizedBox(height: 32),
 
               // Submit Button
