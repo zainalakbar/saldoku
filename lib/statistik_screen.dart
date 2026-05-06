@@ -6,6 +6,7 @@ import 'logic/financial_provider.dart';
 import 'logic/budget_provider.dart';
 import 'transaction_detail_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class StatistikScreen extends StatelessWidget {
   const StatistikScreen({super.key});
@@ -56,26 +57,8 @@ class StatistikScreen extends StatelessWidget {
                   const Text('Analisis keuangan bulanan', style: TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
                   const SizedBox(height: 32),
                   const Text('SALDO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF), letterSpacing: 1.5)),
-                  const SizedBox(height: 16),
-                  
-                  // Simple Visualizer (Progress bar like)
-                  if (monthlyIncome > 0 || monthlyExpense > 0)
-                    _buildSimpleChart(monthlyIncome, monthlyExpense)
-                  else
-                    // Empty Chart State
-                    Container(
-                      height: 150,
-                      width: double.infinity,
-                      alignment: Alignment.center,
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('Belum ada transaksi.', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-                          SizedBox(height: 4),
-                          Text('Grafik akan muncul setelah ada transaksi.', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
-                        ],
-                      ),
-                    ),
+                  const SizedBox(height: 8),
+                  Text(currencyFormatter.format(financialProvider.totalAssetAmount), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF1E60FE))),
                   const SizedBox(height: 24),
                   
                   // Month Selector
@@ -138,6 +121,14 @@ class StatistikScreen extends StatelessWidget {
                   
                   // Financial Planner
                   _buildFinancialPlanner(monthlyIncome, monthlyExpense),
+                  const SizedBox(height: 32),
+
+                  // Trends
+                  _buildTrendChart(context),
+                  const SizedBox(height: 32),
+
+                  // Category Distribution
+                  _buildExpensePieChart(context),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -348,51 +339,139 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSimpleChart(double income, double expense) {
-    final total = income + expense;
-    final incomeWidth = total > 0 ? (income / total) : 0.5;
-    
-    return Container(
-      height: 150,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text('Distribusi Keuangan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0D1C44))),
-              Text('Bulan Ini', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
-            ],
+  Widget _buildTrendChart(BuildContext context) {
+    return Consumer<TransactionProvider>(
+      builder: (context, provider, child) {
+        final now = DateTime.now();
+        final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+        
+        // Group spending by day
+        final Map<int, double> dailySpending = {};
+        for (var t in provider.transactions) {
+          if (t.date.month == now.month && t.date.year == now.year && t.type == TransactionType.expense) {
+            dailySpending[t.date.day] = (dailySpending[t.date.day] ?? 0) + t.amount;
+          }
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
           ),
-          const SizedBox(height: 24),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              height: 20,
-              child: Row(
-                children: [
-                  Expanded(flex: (incomeWidth * 100).toInt(), child: Container(color: const Color(0xFF1E60FE))),
-                  Expanded(flex: ((1 - incomeWidth) * 100).toInt(), child: Container(color: const Color(0xFFFF5252))),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildLegend(const Color(0xFF1E60FE), 'Pemasukan'),
-              const SizedBox(width: 24),
-              _buildLegend(const Color(0xFFFF5252), 'Pengeluaran'),
+              const Text('Tren Pengeluaran Harian', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0D1C44))),
+              const SizedBox(height: 32),
+              SizedBox(
+                height: 200,
+                child: LineChart(
+                  LineChartData(
+                    gridData: const FlGridData(show: false),
+                    titlesData: const FlTitlesData(show: false),
+                    borderData: FlBorderData(show: false),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: List.generate(daysInMonth, (index) {
+                          final day = index + 1;
+                          return FlSpot(day.toDouble(), dailySpending[day] ?? 0);
+                        }),
+                        isCurved: true,
+                        color: const Color(0xFF1E60FE),
+                        barWidth: 3,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true, 
+                          color: const Color(0xFF1E60FE).withOpacity(0.1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Center(child: Text('Tanggal dalam bulan ini', style: TextStyle(fontSize: 11, color: Colors.grey))),
             ],
-          )
-        ],
-      ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildExpensePieChart(BuildContext context) {
+    return Consumer<TransactionProvider>(
+      builder: (context, provider, child) {
+        final now = DateTime.now();
+        final monthlyTransactions = provider.getTransactionsByMonth(now.month, now.year)
+            .where((t) => t.type == TransactionType.expense)
+            .toList();
+        
+        final Map<String, double> categoryData = {};
+        for (var t in monthlyTransactions) {
+          categoryData[t.category.name] = (categoryData[t.category.name] ?? 0) + t.amount;
+        }
+
+        final totalExpense = categoryData.values.fold(0.0, (sum, val) => sum + val);
+
+        if (categoryData.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: const Center(child: Text('Belum ada data pengeluaran bulan ini', style: TextStyle(color: Colors.grey))),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Distribusi Pengeluaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0D1C44))),
+              const SizedBox(height: 32),
+              SizedBox(
+                height: 200,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 4,
+                    centerSpaceRadius: 50,
+                    sections: categoryData.entries.map((entry) {
+                      final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == entry.key, orElse: () => AppCategories.expenseCategories.last);
+                      final percentage = (entry.value / totalExpense) * 100;
+                      return PieChartSectionData(
+                        color: cat.color,
+                        value: entry.value,
+                        title: '${percentage.toStringAsFixed(0)}%',
+                        radius: 50,
+                        titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: categoryData.keys.map((catName) {
+                  final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == catName, orElse: () => AppCategories.expenseCategories.last);
+                  return _buildLegend(cat.color, catName);
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
