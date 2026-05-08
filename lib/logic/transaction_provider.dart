@@ -45,6 +45,16 @@ class TransactionProvider with ChangeNotifier {
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
+  double getCategorySpending(String categoryName, int month, int year) {
+    return _transactions
+        .where((t) => 
+          t.type == TransactionType.expense && 
+          t.category.name == categoryName && 
+          t.date.month == month && 
+          t.date.year == year)
+        .fold(0.0, (sum, t) => sum + t.amount);
+  }
+
   List<Transaction> getTransactionsByMonth(int month, int year) {
     return _transactions
         .where((t) => t.date.month == month && t.date.year == year)

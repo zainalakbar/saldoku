@@ -209,6 +209,8 @@ class DashboardScreen extends StatelessWidget {
                 _buildHeader(context),
                 const SizedBox(height: 16),
                 _buildBalanceCards(context),
+                const SizedBox(height: 20),
+                _buildSmartInsights(context),
                 const SizedBox(height: 24),
                 _buildFeatures(context),
                 const SizedBox(height: 24),
@@ -1088,6 +1090,87 @@ class DashboardScreen extends StatelessWidget {
             child: const Text('Simpan'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSmartInsights(BuildContext context) {
+    final budgetProvider = Provider.of<BudgetProvider>(context);
+    final financialProvider = Provider.of<FinancialProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    String message = "Keuanganmu hari ini terlihat stabil gess. Tetap konsisten ya!";
+    IconData icon = Icons.auto_awesome;
+    Color iconColor = Colors.amber;
+
+    // Logic for insights
+    bool hasOverBudget = false;
+    bool hasWarningBudget = false;
+    String categoryName = "";
+
+    for (var cat in AppCategories.expenseCategories) {
+      final budget = budgetProvider.getBudgetForCategory(cat.name, DateTime.now().month, DateTime.now().year);
+      if (budget != null) {
+        final spending = Provider.of<TransactionProvider>(context, listen: false).getCategorySpending(cat.name, DateTime.now().month, DateTime.now().year);
+        final usage = spending / budget.limitAmount;
+        if (usage >= 1.0) {
+          hasOverBudget = true; categoryName = cat.name; break;
+        } else if (usage >= 0.8) {
+          hasWarningBudget = true; categoryName = cat.name;
+        }
+      }
+    }
+
+    if (hasOverBudget) {
+      message = "Waduh! Pengeluaran $categoryName kamu sudah jebol budget. Rem dulu gess! 🛑";
+      icon = Icons.warning_amber_rounded;
+      iconColor = Colors.red;
+    } else if (hasWarningBudget) {
+      message = "Waspada gess, pengeluaran $categoryName sudah mau habis limitnya. Hati-hati! ⚠️";
+      icon = Icons.info_outline;
+      iconColor = Colors.orange;
+    } else if (financialProvider.goals.isNotEmpty && (financialProvider.goals.first.currentAmount / financialProvider.goals.first.targetAmount) >= 0.9) {
+      message = "Dikit lagi! Tabungan '${financialProvider.goals.first.name}' kamu hampir finish. Semangat! 🎉";
+      icon = Icons.emoji_events;
+      iconColor = Colors.amber;
+    } else if (budgetProvider.budgets.isEmpty) {
+      message = "Saran: Coba set Budget di tab Statistik biar pengeluaranmu lebih terkontrol gess! 📊";
+      icon = Icons.lightbulb_outline;
+      iconColor = Colors.blue;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: iconColor.withOpacity(0.3), width: 1.5),
+          boxShadow: [
+            BoxShadow(color: iconColor.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: iconColor.withOpacity(0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
