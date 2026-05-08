@@ -6,6 +6,7 @@ class ThemeProvider with ChangeNotifier {
   bool _isAppLocked = true; // Start locked for security
   String _userName = "Akbar Gg";
   String _userPin = "1234";
+  String? _profileImagePath;
 
   ThemeProvider() {
     _loadFromPrefs();
@@ -15,6 +16,7 @@ class ThemeProvider with ChangeNotifier {
   bool get isAppLocked => _isAppLocked;
   String get userName => _userName;
   String get userPin => _userPin;
+  String? get profileImagePath => _profileImagePath;
 
   bool get isDarkMode => _themeMode == ThemeMode.dark;
 
@@ -45,10 +47,17 @@ class ThemeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void setProfileImage(String? path) {
+    _profileImagePath = path;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     _userName = prefs.getString('user_name') ?? "Akbar Gg";
     _userPin = prefs.getString('user_pin') ?? "1234";
+    _profileImagePath = prefs.getString('profile_image_path');
     notifyListeners();
   }
 
@@ -56,6 +65,11 @@ class ThemeProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', _userName);
     await prefs.setString('user_pin', _userPin);
+    if (_profileImagePath != null) {
+      await prefs.setString('profile_image_path', _profileImagePath!);
+    } else {
+      await prefs.remove('profile_image_path');
+    }
   }
 
   // Dark Theme Data

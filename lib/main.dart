@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'calculator_sheet.dart';
 import 'statistik_screen.dart';
@@ -240,7 +241,12 @@ class DashboardScreen extends StatelessWidget {
           CircleAvatar(
             radius: 24,
             backgroundColor: const Color(0xFF8B429A),
-            child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            backgroundImage: context.watch<ThemeProvider>().profileImagePath != null
+                ? FileImage(File(context.watch<ThemeProvider>().profileImagePath!))
+                : null,
+            child: context.watch<ThemeProvider>().profileImagePath == null
+                ? Text(initial, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))
+                : null,
           ),
           const SizedBox(width: 12),
           Column(

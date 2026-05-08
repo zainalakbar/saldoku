@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'logic/theme_provider.dart';
 import 'logic/transaction_provider.dart';
 import 'pin_lock_screen.dart';
@@ -13,6 +15,17 @@ class AkunScreen extends StatefulWidget {
 
 class _AkunScreenState extends State<AkunScreen> {
   // Local variable removed, using Provider instead
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (pickedFile != null) {
+      if (mounted) {
+        Provider.of<ThemeProvider>(context, listen: false).setProfileImage(pickedFile.path);
+      }
+    }
+  }
 
 
   void _showEditProfileDialog() {
@@ -147,26 +160,37 @@ class _AkunScreenState extends State<AkunScreen> {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            Container(
-              height: 100,
-              width: 100,
-              decoration: BoxDecoration(
-                color: const Color(0xFF8B429A),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 4),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF8B429A).withOpacity(0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  themeProvider.userName.isNotEmpty ? themeProvider.userName[0].toUpperCase() : 'A', 
-                  style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                height: 100,
+                width: 100,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B429A),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF8B429A).withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                  image: themeProvider.profileImagePath != null
+                      ? DecorationImage(
+                          image: FileImage(File(themeProvider.profileImagePath!)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
+                child: themeProvider.profileImagePath == null
+                    ? Center(
+                        child: Text(
+                          themeProvider.userName.isNotEmpty ? themeProvider.userName[0].toUpperCase() : 'A', 
+                          style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)
+                        ),
+                      )
+                    : null,
               ),
             ),
             Positioned(
