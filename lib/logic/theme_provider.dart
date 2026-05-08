@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   bool _isAppLocked = true; // Start locked for security
+  String _userName = "Akbar Gg";
+  String _userPin = "1234";
+
+  ThemeProvider() {
+    _loadFromPrefs();
+  }
 
   ThemeMode get themeMode => _themeMode;
   bool get isAppLocked => _isAppLocked;
+  String get userName => _userName;
+  String get userPin => _userPin;
 
   bool get isDarkMode => _themeMode == ThemeMode.dark;
 
@@ -22,6 +31,31 @@ class ThemeProvider with ChangeNotifier {
   void lockApp() {
     _isAppLocked = true;
     notifyListeners();
+  }
+
+  void setUserName(String name) {
+    _userName = name;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void updatePin(String newPin) {
+    _userPin = newPin;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  Future<void> _loadFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userName = prefs.getString('user_name') ?? "Akbar Gg";
+    _userPin = prefs.getString('user_pin') ?? "1234";
+    notifyListeners();
+  }
+
+  Future<void> _saveToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_name', _userName);
+    await prefs.setString('user_pin', _userPin);
   }
 
   // Dark Theme Data

@@ -230,21 +230,24 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final userName = context.watch<ThemeProvider>().userName;
+    final initial = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 24,
-            backgroundColor: Color(0xFF8B429A),
-            child: Text('A', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            backgroundColor: const Color(0xFF8B429A),
+            child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Selamat Siang ☀️', style: Theme.of(context).textTheme.bodyMedium),
-              Text('Akbar Gg', style: Theme.of(context).textTheme.headlineMedium),
+              Text(userName, style: Theme.of(context).textTheme.headlineMedium),
             ],
           ),
           const Spacer(),

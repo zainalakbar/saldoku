@@ -12,10 +12,13 @@ class AkunScreen extends StatefulWidget {
 }
 
 class _AkunScreenState extends State<AkunScreen> {
-  String _userName = "Akbar Gg";
+  // Local variable removed, using Provider instead
+
 
   void _showEditProfileDialog() {
-    final TextEditingController _controller = TextEditingController(text: _userName);
+    final TextEditingController _controller = TextEditingController(
+      text: Provider.of<ThemeProvider>(context, listen: false).userName
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -36,9 +39,7 @@ class _AkunScreenState extends State<AkunScreen> {
           ElevatedButton(
             onPressed: () {
               if (_controller.text.isNotEmpty) {
-                setState(() {
-                  _userName = _controller.text;
-                });
+                Provider.of<ThemeProvider>(context, listen: false).setUserName(_controller.text);
                 Navigator.pop(context);
               }
             },
@@ -140,6 +141,7 @@ class _AkunScreenState extends State<AkunScreen> {
   }
 
   Widget _buildProfileHeader(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Column(
       children: [
         Stack(
@@ -160,8 +162,11 @@ class _AkunScreenState extends State<AkunScreen> {
                   ),
                 ],
               ),
-              child: const Center(
-                child: Text('A', style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)),
+              child: Center(
+                child: Text(
+                  themeProvider.userName.isNotEmpty ? themeProvider.userName[0].toUpperCase() : 'A', 
+                  style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)
+                ),
               ),
             ),
             Positioned(
@@ -185,7 +190,7 @@ class _AkunScreenState extends State<AkunScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(_userName, style: Theme.of(context).textTheme.headlineMedium),
+              Text(Provider.of<ThemeProvider>(context).userName, style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(width: 8),
               Icon(Icons.edit, size: 18, color: Theme.of(context).primaryColor),
             ],
