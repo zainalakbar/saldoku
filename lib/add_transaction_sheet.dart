@@ -175,12 +175,12 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
               const SizedBox(height: 24),
 
               // Description
-              const Text('Keterangan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+              Text(_type == TransactionType.expense ? 'Keterangan' : 'Sumber Pemasukan', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  hintText: 'Beli apa hari ini?',
+                  hintText: _type == TransactionType.expense ? 'Beli apa hari ini?' : 'Dapat uang dari mana?',
                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
                   filled: true,
                   fillColor: const Color(0xFFF9FAFB),

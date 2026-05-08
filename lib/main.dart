@@ -301,9 +301,9 @@ class DashboardScreen extends StatelessWidget {
               icon: Icons.account_balance_wallet,
               iconColor: const Color(0xFF1E60FE),
               iconBgColor: const Color(0xFFE8F0FF),
-              title: 'Total Aset',
-              amount: currencyFormatter.format(Provider.of<FinancialProvider>(context).totalAssetAmount),
-              onTap: () => _showAsetBottomSheet(context),
+              title: 'Sisa Saldo',
+              amount: currencyFormatter.format(provider.currentBalance),
+              onTap: null,
             ),
             const SizedBox(height: 12),
             Row(
