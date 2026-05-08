@@ -5,6 +5,7 @@ import 'database_service.dart';
 class FinancialProvider with ChangeNotifier {
   final List<FinancialAsset> _assets = [];
   final List<FinancialGoal> _goals = [];
+  final List<Debt> _debts = [];
   final DatabaseService _dbService = DatabaseService();
 
   FinancialProvider() {
@@ -13,6 +14,7 @@ class FinancialProvider with ChangeNotifier {
 
   List<FinancialAsset> get assets => [..._assets];
   List<FinancialGoal> get goals => [..._goals];
+  List<Debt> get debts => [..._debts];
 
   double get totalAssetAmount {
     return _assets.fold(0.0, (sum, asset) => sum + asset.amount);
@@ -22,21 +24,74 @@ class FinancialProvider with ChangeNotifier {
     return _goals.fold(0.0, (sum, goal) => sum + goal.currentAmount);
   }
 
+  double get totalDebtAmount {
+    return _debts
+        .where((d) => d.type == DebtType.fromMe && !d.isPaid)
+        .fold(0.0, (sum, debt) => sum + debt.amount);
+  }
+
+  double get totalPiutangAmount {
+    return _debts
+        .where((d) => d.type == DebtType.toMe && !d.isPaid)
+        .fold(0.0, (sum, debt) => sum + debt.amount);
+  }
+
   // Load data
   Future<void> loadData() async {
     try {
       final assetsList = await _dbService.getAllAssets();
       final goalsList = await _dbService.getAllGoals();
+      final debtsList = await _dbService.getAllDebts();
       
       _assets.clear();
       _assets.addAll(assetsList);
       
       _goals.clear();
       _goals.addAll(goalsList);
+
+      _debts.clear();
+      _debts.addAll(debtsList);
       
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading financial data: $e');
+    }
+  }
+
+  // ... (Asset and Goal methods)
+
+  // Debt Methods
+  Future<void> addDebt(Debt debt) async {
+    _debts.add(debt);
+    notifyListeners();
+    try {
+      await _dbService.insertDebt(debt);
+    } catch (e) {
+      debugPrint('Error saving debt: $e');
+    }
+  }
+
+  Future<void> toggleDebtPaid(String id) async {
+    final index = _debts.indexWhere((d) => d.id == id);
+    if (index != -1) {
+      final updatedDebt = _debts[index].copyWith(isPaid: !_debts[index].isPaid);
+      _debts[index] = updatedDebt;
+      notifyListeners();
+      try {
+        await _dbService.insertDebt(updatedDebt);
+      } catch (e) {
+        debugPrint('Error updating debt status: $e');
+      }
+    }
+  }
+
+  Future<void> deleteDebt(String id) async {
+    _debts.removeWhere((d) => d.id == id);
+    notifyListeners();
+    try {
+      await _dbService.deleteDebt(id);
+    } catch (e) {
+      debugPrint('Error deleting debt: $e');
     }
   }
 

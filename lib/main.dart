@@ -15,6 +15,7 @@ import 'logic/financial_models.dart';
 import 'add_transaction_sheet.dart';
 import 'transaction_detail_screen.dart';
 import 'pin_lock_screen.dart';
+import 'debt_management_screen.dart';
 import 'package:intl/intl.dart';
 
 void main() {
@@ -1207,8 +1208,13 @@ class DashboardScreen extends StatelessWidget {
                 },
               ),
               _buildFeatureIcon(
-                context, Icons.savings, 'Tabungan', const Color(0xFF333333), Colors.grey.shade200,
-                onTap: () => _showTabunganBottomSheet(context),
+                context, Icons.account_balance_outlined, 'Hutang', const Color(0xFFF59E0B), Colors.orange.shade50,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const DebtManagementScreen()),
+                  );
+                },
               ),
               _buildFeatureIcon(
                 context, Icons.pie_chart, 'Budgeting', const Color(0xFFFF9800), Colors.orange.shade50,
@@ -1285,15 +1291,30 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _buildSummaryItem(
             context: context,
-            icon: Icons.north_east,
-            iconColor: const Color(0xFFFF5252),
-            iconBgColor: const Color(0xFFFFEBEE),
-            title: 'Pengeluaran bulan ini',
-            amount: currencyFormatter.format(monthlyExpense),
+            icon: Icons.money_off,
+            iconColor: const Color(0xFFF59E0B),
+            iconBgColor: const Color(0xFFFFF4E5),
+            title: 'Total Hutang Saya',
+            amount: currencyFormatter.format(Provider.of<FinancialProvider>(context).totalDebtAmount),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Pengeluaran Bulan Ini')),
+                MaterialPageRoute(builder: (context) => const DebtManagementScreen()),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _buildSummaryItem(
+            context: context,
+            icon: Icons.savings_outlined,
+            iconColor: const Color(0xFF10B981),
+            iconBgColor: const Color(0xFFE6F7F1),
+            title: 'Total Piutang (Ke Saya)',
+            amount: currencyFormatter.format(Provider.of<FinancialProvider>(context).totalPiutangAmount),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DebtManagementScreen()),
               );
             },
           ),
