@@ -183,51 +183,49 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 100),
       child: Stack(
         children: [
-                // Background Gradient Header (Now scrolls with content)
-                Container(
-                  height: 400,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFF8BBEFF),
-                        Color(0xFFE2EDFF),
-                        Color(0xFFF2F5FB),
-                      ],
-                      stops: [0.0, 0.4, 1.0],
-                    ),
-                  ),
-                ),
-                SafeArea(
-                  bottom: false,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
-                      const SizedBox(height: 16),
-                      _buildBalanceCards(context),
-                      const SizedBox(height: 24),
-                      _buildFeatures(context),
-                      const SizedBox(height: 24),
-                      _buildMonthlySummary(context),
-                      const SizedBox(height: 24),
-                      _buildNotesSection(),
-                      const SizedBox(height: 24),
-                      _buildTransactionHistory(),
-                    ],
-                  ),
-                ),
+          // Background Gradient Header
+          Container(
+            height: 400,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark 
+                  ? [const Color(0xFF1E1E2C), const Color(0xFF0A0E21), const Color(0xFF0A0E21)]
+                  : [const Color(0xFF8BBEFF), const Color(0xFFE2EDFF), const Color(0xFFF2F5FB)],
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 16),
+                _buildBalanceCards(context),
+                const SizedBox(height: 24),
+                _buildFeatures(context),
+                const SizedBox(height: 24),
+                _buildMonthlySummary(context),
+                const SizedBox(height: 24),
+                _buildNotesSection(context),
+                const SizedBox(height: 24),
+                _buildTransactionHistory(),
               ],
             ),
-          );
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
       child: Row(
@@ -238,11 +236,11 @@ class DashboardScreen extends StatelessWidget {
             child: Text('A', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 12),
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Selamat Siang ☀️', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 13, fontWeight: FontWeight.w500)),
-              Text('Akbar Gg', style: TextStyle(color: Color(0xFF0D1C44), fontSize: 18, fontWeight: FontWeight.w800)),
+              Text('Selamat Siang ☀️', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500)),
+              Text('Akbar Gg', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
             ],
           ),
           const Spacer(),
@@ -251,11 +249,11 @@ class DashboardScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.mail_outline, color: Color(0xFF0D1C44), size: 22),
+                child: Icon(Icons.mail_outline, color: Theme.of(context).colorScheme.onSurface, size: 22),
               ),
               Positioned(
                 right: -2,
@@ -299,6 +297,7 @@ class DashboardScreen extends StatelessWidget {
         child: Column(
           children: [
             _buildBalanceItem(
+              context: context,
               icon: Icons.account_balance_wallet,
               iconColor: const Color(0xFF1E60FE),
               iconBgColor: const Color(0xFFE8F0FF),
@@ -311,6 +310,7 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildBalanceItem(
+                    context: context,
                     icon: Icons.south_west,
                     iconColor: const Color(0xFF1E60FE),
                     iconBgColor: const Color(0xFFE8F0FF),
@@ -322,6 +322,7 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildBalanceItem(
+                    context: context,
                     icon: Icons.north_east,
                     iconColor: const Color(0xFFFF5252),
                     iconBgColor: const Color(0xFFFFEBEE),
@@ -332,13 +333,73 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            _buildQuickGoalCard(context),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildQuickGoalCard(BuildContext context) {
+    final financialProvider = Provider.of<FinancialProvider>(context);
+    if (financialProvider.goals.isEmpty) return const SizedBox.shrink();
+    
+    // Get the most recent goal
+    final goal = financialProvider.goals.first;
+    final progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) : 0.0;
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF4A00E0).withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Target Tabungan', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+              Text('${(progress * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(goal.name, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              backgroundColor: Colors.white.withOpacity(0.2),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              minHeight: 6,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(currencyFormatter.format(goal.currentAmount), style: const TextStyle(color: Colors.white, fontSize: 11)),
+              Text('dari ${currencyFormatter.format(goal.targetAmount)}', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBalanceItem({
+    required BuildContext context,
     required IconData icon,
     required Color iconColor,
     required Color iconBgColor,
@@ -346,16 +407,17 @@ class DashboardScreen extends StatelessWidget {
     required String amount,
     VoidCallback? onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -376,9 +438,9 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w500)),
+                  Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 4),
-                  Text(amount, style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(amount, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
                 ],
               ),
             ),
@@ -1046,7 +1108,7 @@ class DashboardScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildFeatureIcon(
-                Icons.calculate, 'Kalkulator', const Color(0xFF1E60FE), Colors.blue.shade50,
+                context, Icons.calculate, 'Kalkulator', const Color(0xFF1E60FE), Colors.blue.shade50,
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
@@ -1057,7 +1119,7 @@ class DashboardScreen extends StatelessWidget {
                 },
               ),
               _buildFeatureIcon(
-                Icons.receipt_long, 'Split Bill', const Color(0xFF607D8B), Colors.blueGrey.shade50,
+                context, Icons.receipt_long, 'Split Bill', const Color(0xFF607D8B), Colors.blueGrey.shade50,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -1066,11 +1128,11 @@ class DashboardScreen extends StatelessWidget {
                 },
               ),
               _buildFeatureIcon(
-                Icons.savings, 'Tabungan', const Color(0xFF333333), Colors.grey.shade200,
+                context, Icons.savings, 'Tabungan', const Color(0xFF333333), Colors.grey.shade200,
                 onTap: () => _showTabunganBottomSheet(context),
               ),
               _buildFeatureIcon(
-                Icons.pie_chart, 'Budgeting', const Color(0xFFFF9800), Colors.orange.shade50,
+                context, Icons.pie_chart, 'Budgeting', const Color(0xFFFF9800), Colors.orange.shade50,
                 onTap: () => _showBudgetBottomSheet(context),
               ),
             ],
@@ -1080,7 +1142,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureIcon(IconData icon, String label, Color color, Color bgColor, {VoidCallback? onTap}) {
+  Widget _buildFeatureIcon(BuildContext context, IconData icon, String label, Color color, Color bgColor, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1092,7 +1154,7 @@ class DashboardScreen extends StatelessWidget {
               height: 54,
               width: 54,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -1108,7 +1170,7 @@ class DashboardScreen extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF4A4A4A), fontWeight: FontWeight.w500, height: 1.2),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.w500, height: 1.2),
             ),
           ],
         ),
@@ -1128,6 +1190,7 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         children: [
           _buildSummaryItem(
+            context: context,
             icon: Icons.south_west,
             iconColor: const Color(0xFF1E60FE),
             iconBgColor: const Color(0xFFE8F0FF),
@@ -1142,6 +1205,7 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildSummaryItem(
+            context: context,
             icon: Icons.north_east,
             iconColor: const Color(0xFFFF5252),
             iconBgColor: const Color(0xFFFFEBEE),
@@ -1160,6 +1224,7 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildSummaryItem({
+    required BuildContext context,
     required IconData icon,
     required Color iconColor,
     required Color iconBgColor,
@@ -1171,40 +1236,42 @@ class DashboardScreen extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              shape: BoxShape.circle,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+          border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(title, style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 14, fontWeight: FontWeight.w500)),
-          ),
-          Text(amount, style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.w500)),
+            ),
+          Text(amount, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15)),
           const SizedBox(width: 12),
-          const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF), size: 20),
+          Icon(Icons.keyboard_arrow_down, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2), size: 20),
         ],
       ),
-    ),);
+    ),
+    );
   }
 
-  Widget _buildNotesSection() {
+  Widget _buildNotesSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1213,8 +1280,8 @@ class DashboardScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Notes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0D1C44))),
-              Text('Lihat Semua', style: TextStyle(fontSize: 13, color: const Color(0xFF1E60FE), fontWeight: FontWeight.w600)),
+              Text('Notes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+              const Text('Lihat Semua', style: TextStyle(fontSize: 13, color: Color(0xFF1E60FE), fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -1224,8 +1291,8 @@ class DashboardScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              _buildNotesCard(),
-              _buildNotesCard(),
+              _buildNotesCard(context),
+              _buildNotesCard(context),
             ],
           ),
         ),
@@ -1234,13 +1301,13 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNotesCard() {
+  Widget _buildNotesCard(BuildContext context) {
     return Container(
       width: 200,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1256,14 +1323,14 @@ class DashboardScreen extends StatelessWidget {
             height: 32,
             width: 32,
             decoration: BoxDecoration(
-              color: Colors.blue.shade100,
+              color: Colors.blue.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.person, color: Colors.blue.shade700, size: 20),
           ),
           const SizedBox(width: 10),
-          const Expanded(
-            child: Text('Sisa Saldo New...', style: TextStyle(color: Color(0xFF0D1C44), fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+          Expanded(
+            child: Text('Sisa Saldo New...', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
           ),
         ],
       ),
@@ -1291,9 +1358,9 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           'Riwayat Transaksi',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44)),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
         ),
         const SizedBox(height: 16),
         
@@ -1302,7 +1369,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
           width: 220,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: const Color(0xFFE8EEF8),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Row(
@@ -1314,7 +1381,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: _isAsetTab ? BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
@@ -1325,7 +1392,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                       ],
                     ) : null,
                     alignment: Alignment.center,
-                    child: Text('Aset', style: TextStyle(fontWeight: _isAsetTab ? FontWeight.w600 : FontWeight.w500, color: _isAsetTab ? const Color(0xFF0D1C44) : const Color(0xFF6B7280), fontSize: 14)),
+                    child: Text('Aset', style: TextStyle(fontWeight: _isAsetTab ? FontWeight.w600 : FontWeight.w500, color: _isAsetTab ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 14)),
                   ),
                 ),
               ),
@@ -1336,7 +1403,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: !_isAsetTab ? BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
@@ -1347,7 +1414,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                       ],
                     ) : null,
                     alignment: Alignment.center,
-                    child: Text('Hutang', style: TextStyle(fontWeight: !_isAsetTab ? FontWeight.w600 : FontWeight.w500, color: !_isAsetTab ? const Color(0xFF0D1C44) : const Color(0xFF6B7280), fontSize: 14)),
+                    child: Text('Hutang', style: TextStyle(fontWeight: !_isAsetTab ? FontWeight.w600 : FontWeight.w500, color: !_isAsetTab ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 14)),
                   ),
                 ),
               ),
@@ -1373,7 +1440,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(

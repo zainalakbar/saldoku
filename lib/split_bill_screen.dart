@@ -38,8 +38,9 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Tambah Teman', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold)),
+          title: Text('Tambah Teman', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
           content: TextField(
             controller: _friendNameController,
             decoration: const InputDecoration(
@@ -79,8 +80,9 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Tambah Makanan/Pesanan', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 18)),
+          title: Text('Tambah Makanan/Pesanan', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 18)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -127,6 +129,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
   void _showAssignDialog(TransactionItem item) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         return StatefulBuilder(
@@ -137,7 +140,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Siapa yang makan ${item.name}?', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                  Text('Siapa yang makan ${item.name}?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 16),
                   Expanded(
                     child: ListView.builder(
@@ -148,7 +151,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                         return CheckboxListTile(
                           value: isAssigned,
                           activeColor: const Color(0xFF1E60FE),
-                          title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                          title: Text(user.name, style: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
                           onChanged: (bool? val) {
                             setModalState(() {
                               if (val == true) {
@@ -204,9 +207,9 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
         return Container(
           height: MediaQuery.of(context).size.height * 0.7,
           padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Color(0xFFF2F5FB),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,9 +218,9 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                 child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
               ),
               const SizedBox(height: 24),
-              const Text('Rincian Patungan', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+              Text('Rincian Patungan', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 8),
-              Text('Total Tagihan Kasir: Rp${bill.totalAmount.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
+              Text('Total Tagihan Kasir: Rp${bill.totalAmount.toStringAsFixed(0)}', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))),
               const SizedBox(height: 24),
               Expanded(
                 child: ListView.builder(
@@ -229,7 +232,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
                       ),
@@ -240,7 +243,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0D1C44))),
+                                Text(user.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
                                 const SizedBox(height: 4),
                                 Text('Item: Rp${debt.itemsTotal.toStringAsFixed(0)} | Pajak: Rp${debt.taxShare.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
                               ],
@@ -263,12 +266,12 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F5FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF0D1C44)),
-        title: const Text('Split Bill', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
+        title: Text('Split Bill', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -280,7 +283,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Teman Patungan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                Text('Teman Patungan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 TextButton.icon(
                   onPressed: _addFriend,
                   icon: const Icon(Icons.person_add, size: 16, color: Color(0xFF1E60FE)),
@@ -315,7 +318,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Daftar Pesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                Text('Daftar Pesanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 TextButton.icon(
                   onPressed: _addItem,
                   icon: const Icon(Icons.add_shopping_cart, size: 16, color: Color(0xFF1E60FE)),
@@ -328,8 +331,8 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                child: const Text('Belum ada makanan/pesanan yang ditambahkan.', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF9CA3AF))),
+                decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(16)),
+                child: Text('Belum ada makanan/pesanan yang ditambahkan.', textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))),
               )
             else
               ListView.builder(
@@ -344,13 +347,13 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
                     ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                      title: Text(item.name, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -372,11 +375,11 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             const SizedBox(height: 32),
 
             // Pajak & Biaya Layanan
-            const Text('Pajak & Biaya Layanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+            Text('Pajak & Biaya Layanan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: TextField(
@@ -385,7 +388,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                 decoration: InputDecoration(
                   hintText: 'Total Pajak (mis: 15000)',
                   prefixText: 'Rp ',
-                  prefixStyle: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.w600),
+                  prefixStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),

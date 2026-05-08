@@ -32,11 +32,11 @@ class _NotesScreenState extends State<NotesScreen> {
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F5FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        title: const Text('Notes Pengeluaran', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold)),
+        title: Text('Notes Pengeluaran', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
@@ -52,11 +52,11 @@ class _NotesScreenState extends State<NotesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long, size: 80, color: Colors.grey.shade300),
+                  Icon(Icons.receipt_long, size: 80, color: Colors.grey.withOpacity(0.3)),
                   const SizedBox(height: 16),
-                  const Text('Belum ada catatan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF4A4A4A))),
+                  Text('Belum ada catatan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
                   const SizedBox(height: 8),
-                  const Text('Catat pengeluaran dan simpan struknya disini', style: TextStyle(color: Color(0xFF9CA3AF))),
+                  Text('Catat pengeluaran dan simpan struknya disini', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: _showAddNoteSheet,
@@ -80,7 +80,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -123,12 +123,12 @@ class _NotesScreenState extends State<NotesScreen> {
                                 children: [
                                   Text(
                                     note.title,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44)),
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     DateFormat('dd MMM yyyy, HH:mm').format(note.date),
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
                                   ),
                                 ],
                               ),
@@ -208,9 +208,9 @@ class _AddNoteSheetState extends State<AddNoteSheet> {
         right: 24,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -220,13 +220,13 @@ class _AddNoteSheetState extends State<AddNoteSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Catat Pengeluaran', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                Text('Catat Pengeluaran', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
-                    child: const Icon(Icons.close, size: 18, color: Colors.grey),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05), shape: BoxShape.circle),
+                    child: Icon(Icons.close, size: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
                   ),
                 ),
               ],
@@ -258,7 +258,7 @@ class _AddNoteSheetState extends State<AddNoteSheet> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text('Foto Struk (Opsional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF4A4A4A))),
+            Text('Foto Struk (Opsional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
             const SizedBox(height: 12),
             if (_selectedImage != null)
               Stack(
