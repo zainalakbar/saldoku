@@ -269,32 +269,6 @@ class DashboardScreen extends StatelessWidget {
               Text(userName, style: Theme.of(context).textTheme.headlineMedium),
             ],
           ),
-          const Spacer(),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.mail_outline, color: Theme.of(context).colorScheme.onSurface, size: 22),
-              ),
-              Positioned(
-                right: -2,
-                top: -2,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE53935),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text('3', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );

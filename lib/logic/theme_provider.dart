@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider with ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   bool _isAppLocked = true; // Start locked for security
   String _userName = "Akbar Gg";
   String _userPin = "1234";
@@ -22,6 +22,7 @@ class ThemeProvider with ChangeNotifier {
 
   void toggleTheme(bool isDark) {
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    _saveToPrefs();
     notifyListeners();
   }
 
@@ -58,6 +59,10 @@ class ThemeProvider with ChangeNotifier {
     _userName = prefs.getString('user_name') ?? "Akbar Gg";
     _userPin = prefs.getString('user_pin') ?? "1234";
     _profileImagePath = prefs.getString('profile_image_path');
+    
+    final savedTheme = prefs.getString('theme_mode') ?? 'light';
+    _themeMode = savedTheme == 'dark' ? ThemeMode.dark : ThemeMode.light;
+    
     notifyListeners();
   }
 
@@ -65,6 +70,8 @@ class ThemeProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', _userName);
     await prefs.setString('user_pin', _userPin);
+    await prefs.setString('theme_mode', _themeMode == ThemeMode.dark ? 'dark' : 'light');
+    
     if (_profileImagePath != null) {
       await prefs.setString('profile_image_path', _profileImagePath!);
     } else {
