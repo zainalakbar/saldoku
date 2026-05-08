@@ -2,9 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'logic/theme_provider.dart';
 import 'logic/transaction_provider.dart';
+import 'pin_lock_screen.dart';
 
-class AkunScreen extends StatelessWidget {
+class AkunScreen extends StatefulWidget {
   const AkunScreen({super.key});
+
+  @override
+  State<AkunScreen> createState() => _AkunScreenState();
+}
+
+class _AkunScreenState extends State<AkunScreen> {
+  String _userName = "Akbar Gg";
+
+  void _showEditProfileDialog() {
+    final TextEditingController _controller = TextEditingController(text: _userName);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text('Edit Nama Profil', style: Theme.of(context).textTheme.titleLarge),
+        content: TextField(
+          controller: _controller,
+          decoration: InputDecoration(
+            hintText: 'Masukkan nama baru',
+            filled: true,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () {
+              if (_controller.text.isNotEmpty) {
+                setState(() {
+                  _userName = _controller.text;
+                });
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,9 +180,19 @@ class AkunScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Text('Akbar Gg', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+        GestureDetector(
+          onTap: _showEditProfileDialog,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(_userName, style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(width: 8),
+              Icon(Icons.edit, size: 18, color: Theme.of(context).primaryColor),
+            ],
+          ),
+        ),
         const SizedBox(height: 4),
-        Text('+62 812 3456 7890', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+        Text('+62 812 3456 7890', style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }
@@ -173,7 +226,19 @@ class AkunScreen extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          if (title == 'Backup & Ekspor Data') {
+          if (title == 'Keamanan & PIN') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => PinLockScreen(
+                isSettingPin: true,
+                onPinVerified: (newPin) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('PIN Berhasil Disetel ke $newPin'), backgroundColor: Colors.green),
+                  );
+                },
+              )),
+            );
+          } else if (title == 'Backup & Ekspor Data') {
             final csvData = Provider.of<TransactionProvider>(context, listen: false).exportToCSV();
             if (csvData.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Belum ada data untuk diekspor')));
@@ -266,8 +331,8 @@ class AkunScreen extends StatelessWidget {
             ),
           ),
           Switch(
-            value: themeProvider.isDarkMode,
-            onChanged: (value) => themeProvider.toggleTheme(),
+            value: themeProvider.themeMode == ThemeMode.dark,
+            onChanged: (value) => themeProvider.toggleTheme(value),
             activeColor: const Color(0xFF1E60FE),
           ),
         ],

@@ -14,6 +14,7 @@ import 'logic/theme_provider.dart';
 import 'logic/financial_models.dart';
 import 'add_transaction_sheet.dart';
 import 'transaction_detail_screen.dart';
+import 'pin_lock_screen.dart';
 import 'package:intl/intl.dart';
 
 void main() {
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
             themeMode: themeProvider.themeMode,
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
-            home: const MainScreen(),
+            home: themeProvider.isAppLocked ? const PinLockScreen() : const MainScreen(),
           );
         },
       ),
@@ -241,8 +242,8 @@ class DashboardScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Selamat Siang ☀️', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500)),
-              Text('Akbar Gg', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
+              Text('Selamat Siang ☀️', style: Theme.of(context).textTheme.bodyMedium),
+              Text('Akbar Gg', style: Theme.of(context).textTheme.headlineMedium),
             ],
           ),
           const Spacer(),
@@ -360,9 +361,9 @@ class DashboardScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF4A00E0).withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(color: const Color(0xFF4A00E0).withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 8))
         ],
       ),
       child: Column(
@@ -371,28 +372,28 @@ class DashboardScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Target Tabungan', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+              const Text('Target Tabungan', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
               Text('${(progress * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(goal.name, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          Text(goal.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 14),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: progress.clamp(0.0, 1.0),
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withOpacity(0.15),
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-              minHeight: 6,
+              minHeight: 8,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(currencyFormatter.format(goal.currentAmount), style: const TextStyle(color: Colors.white, fontSize: 11)),
-              Text('dari ${currencyFormatter.format(goal.targetAmount)}', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+              Text(currencyFormatter.format(goal.currentAmount), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('Goal: ${currencyFormatter.format(goal.targetAmount)}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
             ],
           ),
         ],
@@ -1097,11 +1098,10 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildSmartInsights(BuildContext context) {
     final budgetProvider = Provider.of<BudgetProvider>(context);
     final financialProvider = Provider.of<FinancialProvider>(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     String message = "Keuanganmu hari ini terlihat stabil gess. Tetap konsisten ya!";
     IconData icon = Icons.auto_awesome;
-    Color iconColor = Colors.amber;
+    Color iconColor = const Color(0xFF1E60FE);
 
     // Logic for insights
     bool hasOverBudget = false;
@@ -1136,7 +1136,7 @@ class DashboardScreen extends StatelessWidget {
     } else if (budgetProvider.budgets.isEmpty) {
       message = "Saran: Coba set Budget di tab Statistik biar pengeluaranmu lebih terkontrol gess! 📊";
       icon = Icons.lightbulb_outline;
-      iconColor = Colors.blue;
+      iconColor = const Color(0xFF1E60FE);
     }
 
     return Padding(
@@ -1145,28 +1145,24 @@ class DashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: iconColor.withOpacity(0.3), width: 1.5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
           boxShadow: [
-            BoxShadow(color: iconColor.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+            BoxShadow(color: iconColor.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))
           ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(color: iconColor.withOpacity(0.1), shape: BoxShape.circle),
               child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 message,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
-                ),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
           ],

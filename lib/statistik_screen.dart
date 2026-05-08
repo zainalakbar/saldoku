@@ -56,9 +56,9 @@ class StatistikScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text('Analisis keuangan bulanan', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
                   const SizedBox(height: 32),
-                  Text('SALDO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), letterSpacing: 1.5)),
+                  Text('SALDO', style: Theme.of(context).textTheme.bodySmall?.copyWith(letterSpacing: 1.5, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text(currencyFormatter.format(financialProvider.totalAssetAmount), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF1E60FE))),
+                  Text(currencyFormatter.format(financialProvider.totalAssetAmount), style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: const Color(0xFF1E60FE))),
                   const SizedBox(height: 24),
                   
                   // Month Selector
@@ -445,15 +445,21 @@ class StatistikScreen extends StatelessWidget {
                   PieChartData(
                     sectionsSpace: 4,
                     centerSpaceRadius: 50,
+                    pieTouchData: PieTouchData(
+                      touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                        // Logic for tooltip or highlight
+                      },
+                    ),
                     sections: categoryData.entries.map((entry) {
                       final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == entry.key, orElse: () => AppCategories.expenseCategories.last);
                       final percentage = (entry.value / totalExpense) * 100;
                       return PieChartSectionData(
                         color: cat.color,
                         value: entry.value,
-                        title: '${percentage.toStringAsFixed(0)}%',
+                        title: percentage >= 10 ? '${percentage.toStringAsFixed(0)}%' : '',
                         radius: 50,
                         titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                        showTitle: true,
                       );
                     }).toList(),
                   ),
@@ -490,7 +496,6 @@ class StatistikScreen extends StatelessWidget {
     final expenseRatio = income > 0 ? (expense / income) : 0.0;
     final savingCapacity = income > 0 ? ((income - expense) / income) : 0.0;
     
-    // Simple health score logic
     int healthScore = 50;
     if (income > 0) {
       if (expenseRatio < 0.5) healthScore += 25;
@@ -500,174 +505,78 @@ class StatistikScreen extends StatelessWidget {
       else if (savingCapacity > 0.1) healthScore += 15;
     }
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.purple.shade50, borderRadius: BorderRadius.circular(10)),
-                  child: Icon(Icons.auto_awesome, color: Colors.purple.shade400, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Text('Financial Planner', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
-                const Spacer(),
-                const Text('👍', style: TextStyle(fontSize: 20)),
-              ],
-            ),
-          ),
-          // Tabs
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildTabItem(context, Icons.pie_chart, 'Overview', true),
-                _buildTabItem(context, Icons.thumb_up_alt_outlined, 'Tips', false),
-                _buildTabItem(context, Icons.rocket_launch_outlined, 'Roadmap', false),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Health Score Card
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1D1E33) : const Color(0xFFF2F7FF),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.blue.shade100, width: 1),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Financial Health Score', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15)),
-                        const SizedBox(height: 8),
-                        Text(
-                          healthScore > 70 ? 'Bagus! Keuangan Anda dalam kondisi baik' : 'Ayo tingkatkan kapasitas menabung Anda!',
-                          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, height: 1.4),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    children: [
-                      Text('$healthScore', style: const TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.w800, fontSize: 32)),
-                      const Text('/ 100', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: 50,
-                        height: 6,
-                        decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(3)),
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          width: (healthScore / 100) * 50,
-                          height: 6,
-                          decoration: BoxDecoration(color: const Color(0xFF1E60FE), borderRadius: BorderRadius.circular(3)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Metrics Grid
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Row(
-              children: [
-                Expanded(child: _buildMetricCard(context: context, title: 'Debt Ratio', value: '0.00x', target: '< 0.5x', isGood: true, icon: Icons.arrow_outward)),
-                const SizedBox(width: 12),
-                Expanded(child: _buildMetricCard(context: context, title: 'Expense\nRatio', value: '${(expenseRatio * 100).toStringAsFixed(0)}%', target: '< 70%', isGood: expenseRatio < 0.7, icon: expenseRatio < 0.7 ? Icons.arrow_outward : Icons.south_east)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Row(
-              children: [
-                Expanded(child: _buildMetricCard(context: context, title: 'Saving\nCapacity', value: '${(savingCapacity * 100).toStringAsFixed(0)}%', target: '> 20%', isGood: savingCapacity > 0.2, icon: savingCapacity > 0.2 ? Icons.arrow_outward : Icons.south_east)),
-                const SizedBox(width: 12),
-                Expanded(child: _buildMetricCard(context: context, title: 'Asset\nCoverage', value: 'No Debt', target: '> 1.5x', isGood: true, icon: Icons.arrow_outward)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          // Penjelasan Metrik Keuangan
-          Container(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Text('Financial Insights', style: Theme.of(context).textTheme.titleLarge),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Container(
             width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 20.0),
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1D1E33) : const Color(0xFFF4F7FF),
-              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                colors: isDark 
+                  ? [const Color(0xFF1E3C72), const Color(0xFF2A5298)]
+                  : [const Color(0xFF1E60FE), const Color(0xFF00D2FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E60FE).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                )
+              ],
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.lightbulb_outline, color: Color(0xFF1E60FE), size: 18),
-                    SizedBox(width: 8),
-                    Text('Penjelasan Metrik Keuangan', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600, fontSize: 13)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildExplanationCard(
-                  context: context,
-                  title: 'Debt Ratio',
-                  description: 'Perbandingan total hutang dengan total aset. Semakin rendah semakin baik. Target ideal < 0.5x artinya hutang tidak boleh lebih dari setengah total aset Anda.',
-                  iconBgColor: Colors.orange.shade50,
-                  icon: Icons.pie_chart,
-                  iconColor: Colors.orange.shade400,
-                ),
-                _buildExplanationCard(
-                  context: context,
-                  title: 'Expense Ratio',
-                  description: 'Persentase pengeluaran dari total pendapatan bulanan. Target ideal < 70% artinya maksimal 70% pendapatan untuk pengeluaran, sisanya untuk tabungan.',
-                  iconBgColor: Colors.green.shade50,
-                  icon: Icons.receipt_long,
-                  iconColor: Colors.green.shade400,
-                ),
-                _buildExplanationCard(
-                  context: context,
-                  title: 'Saving Capacity',
-                  description: 'Kemampuan menabung dari pendapatan bulanan. Target ideal > 20% artinya minimal 20% pendapatan harus ditabung untuk masa depan.',
-                  iconBgColor: Colors.blue.shade50,
-                  icon: Icons.savings,
-                  iconColor: Colors.blue.shade400,
-                ),
-                _buildExplanationCard(
-                  context: context,
-                  title: 'Asset Coverage',
-                  description: 'Perbandingan total aset dengan total hutang. Target ideal > 1.5x artinya aset harus 1.5 kali lipat dari hutang untuk keamanan finansial.',
-                  iconBgColor: Colors.purple.shade50,
-                  icon: Icons.shield,
-                  iconColor: Colors.purple.shade400,
+                const Text('Skor Kesehatan Finansial', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 12),
+                Text('$healthScore', style: const TextStyle(color: Colors.white, fontSize: 56, fontWeight: FontWeight.w900, letterSpacing: -2)),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                  child: Text(
+                    healthScore >= 80 ? 'Sangat Sehat gess! 🚀' : healthScore >= 60 ? 'Cukup Sehat' : 'Perlu Waspada!',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        // Metrics Grid
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Row(
+            children: [
+              Expanded(child: _buildMetricCard(context: context, title: 'Debt Ratio', value: '0.00x', target: '< 0.5x', isGood: true, icon: Icons.arrow_outward)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildMetricCard(context: context, title: 'Expense\nRatio', value: '${(expenseRatio * 100).toStringAsFixed(0)}%', target: '< 70%', isGood: expenseRatio < 0.7, icon: expenseRatio < 0.7 ? Icons.arrow_outward : Icons.south_east)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Row(
+            children: [
+              Expanded(child: _buildMetricCard(context: context, title: 'Saving\nCapacity', value: '${(savingCapacity * 100).toStringAsFixed(0)}%', target: '> 20%', isGood: savingCapacity > 0.2, icon: savingCapacity > 0.2 ? Icons.arrow_outward : Icons.south_east)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildMetricCard(context: context, title: 'Asset\nCoverage', value: 'No Debt', target: '> 1.5x', isGood: true, icon: Icons.arrow_outward)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 
@@ -681,15 +590,11 @@ class StatistikScreen extends StatelessWidget {
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
             )
           : null,
-      child: Column(
+      child: Row(
         children: [
-          Icon(icon, color: isActive ? const Color(0xFF1E60FE) : const Color(0xFF9CA3AF), size: 20),
-          const SizedBox(height: 8),
-          Text(label, style: TextStyle(color: isActive ? const Color(0xFF1E60FE) : const Color(0xFF9CA3AF), fontSize: 12, fontWeight: isActive ? FontWeight.bold : FontWeight.w500)),
-          if (isActive) ...[
-            const SizedBox(height: 4),
-            Container(width: 20, height: 2, decoration: BoxDecoration(color: const Color(0xFF1E60FE), borderRadius: BorderRadius.circular(1))),
-          ]
+          Icon(icon, size: 16, color: isActive ? const Color(0xFF1E60FE) : Colors.grey),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(fontSize: 13, fontWeight: isActive ? FontWeight.bold : FontWeight.normal, color: isActive ? const Color(0xFF1E60FE) : Colors.grey)),
         ],
       ),
     );
@@ -700,33 +605,23 @@ class StatistikScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.w600, fontSize: 13, height: 1.2)),
-              ),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isGood ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: isGood ? Colors.green : Colors.red, size: 14),
-              ),
+              Text(title, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+              Icon(icon, size: 14, color: isGood ? Colors.green : Colors.red),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(value, style: TextStyle(color: isGood ? Colors.green : Colors.red, fontWeight: FontWeight.w800, fontSize: 18)),
+          const SizedBox(height: 8),
+          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 4),
-          Text('Target: $target', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 11)),
+          Text('Target: $target', style: TextStyle(fontSize: 10, color: isGood ? Colors.green : Colors.red)),
         ],
       ),
     );
