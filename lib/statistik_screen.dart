@@ -24,6 +24,8 @@ class StatistikScreen extends StatelessWidget {
     
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 100),
       child: Stack(
@@ -31,16 +33,14 @@ class StatistikScreen extends StatelessWidget {
           // Background Gradient Header
           Container(
             height: 300,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFE2EDFF),
-                  Color(0xFFF2F5FB),
-                  Color(0xFFF2F5FB),
-                ],
-                stops: [0.0, 0.6, 1.0],
+                colors: isDark 
+                  ? [const Color(0xFF1E1E2C), const Color(0xFF0A0E21), const Color(0xFF0A0E21)]
+                  : [const Color(0xFFE2EDFF), const Color(0xFFF2F5FB), const Color(0xFFF2F5FB)],
+                stops: const [0.0, 0.6, 1.0],
               ),
             ),
           ),
@@ -52,17 +52,17 @@ class StatistikScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  const Text('Statistik', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                  Text('Statistik', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 4),
-                  const Text('Analisis keuangan bulanan', style: TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
+                  Text('Analisis keuangan bulanan', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
                   const SizedBox(height: 32),
-                  const Text('SALDO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF), letterSpacing: 1.5)),
+                  Text('SALDO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), letterSpacing: 1.5)),
                   const SizedBox(height: 8),
                   Text(currencyFormatter.format(financialProvider.totalAssetAmount), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF1E60FE))),
                   const SizedBox(height: 24),
                   
                   // Month Selector
-                  _buildMonthSelector(transactionProvider),
+                  _buildMonthSelector(context, transactionProvider),
                   const SizedBox(height: 24),
                   
                   // Summary Cards
@@ -101,18 +101,18 @@ class StatistikScreen extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildSmallBalanceCard(icon: Icons.account_balance_wallet, iconColor: const Color(0xFF1E60FE), iconBgColor: const Color(0xFFE8F0FF), title: 'Total Aset', amount: currencyFormatter.format(financialProvider.totalAssetAmount)),
+                        child: _buildSmallBalanceCard(context: context, icon: Icons.account_balance_wallet, iconColor: const Color(0xFF1E60FE), iconBgColor: const Color(0xFFE8F0FF), title: 'Total Aset', amount: currencyFormatter.format(financialProvider.totalAssetAmount)),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildSmallBalanceCard(icon: Icons.credit_card, iconColor: const Color(0xFF4A4A4A), iconBgColor: const Color(0xFFF0F0F0), title: 'Total Hutang', amount: currencyFormatter.format(transactionProvider.totalExpense)),
+                        child: _buildSmallBalanceCard(context: context, icon: Icons.credit_card, iconColor: const Color(0xFF4A4A4A), iconBgColor: const Color(0xFFF0F0F0), title: 'Total Hutang', amount: currencyFormatter.format(transactionProvider.totalExpense)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   
                   // Cash Flow Card
-                  _buildCashFlowCard(currencyFormatter.format(cashFlow), cashFlowPercent),
+                  _buildCashFlowCard(context, currencyFormatter.format(cashFlow), cashFlowPercent),
                   const SizedBox(height: 32),
                   
                   // Budget Status Section
@@ -120,7 +120,7 @@ class StatistikScreen extends StatelessWidget {
                   const SizedBox(height: 32),
                   
                   // Financial Planner
-                  _buildFinancialPlanner(monthlyIncome, monthlyExpense),
+                  _buildFinancialPlanner(context, monthlyIncome, monthlyExpense),
                   const SizedBox(height: 32),
 
                   // Trends
@@ -152,7 +152,7 @@ class StatistikScreen extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Status Budget', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0D1C44))),
+            Text('Status Budget', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 16),
             ...activeBudgets.map((budget) {
               final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == budget.categoryName, orElse: () => AppCategories.expenseCategories.last);
@@ -167,7 +167,7 @@ class StatistikScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
                 ),
@@ -180,7 +180,7 @@ class StatistikScreen extends StatelessWidget {
                           children: [
                             Icon(cat.icon, color: cat.color, size: 18),
                             const SizedBox(width: 8),
-                            Text(budget.categoryName, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D1C44), fontSize: 14)),
+                            Text(budget.categoryName, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
                           ],
                         ),
                         Text(
@@ -217,7 +217,7 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMonthSelector(TransactionProvider provider) {
+  Widget _buildMonthSelector(BuildContext context, TransactionProvider provider) {
     final now = DateTime.now();
     final count = provider.getTransactionsByMonth(now.month, now.year).length;
     final monthName = DateFormat('MMMM yyyy').format(now);
@@ -225,7 +225,7 @@ class StatistikScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
@@ -234,10 +234,10 @@ class StatistikScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Icon(Icons.chevron_left, color: Color(0xFF0D1C44)),
+          Icon(Icons.chevron_left, color: Theme.of(context).colorScheme.onSurface),
           Column(
             children: [
-              Text(monthName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+              Text(monthName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 2),
               Text('$count transaksi', style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
             ],
@@ -254,7 +254,7 @@ class StatistikScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
         ),
@@ -267,7 +267,7 @@ class StatistikScreen extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             Expanded(child: Text(title, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w500))),
-            Text(amount, style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(amount, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(width: 8),
             const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF), size: 18),
           ],
@@ -276,11 +276,11 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSmallBalanceCard({required IconData icon, required Color iconColor, required Color iconBgColor, required String title, required String amount}) {
+  Widget _buildSmallBalanceCard({required BuildContext context, required IconData icon, required Color iconColor, required Color iconBgColor, required String title, required String amount}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
@@ -301,18 +301,18 @@ class StatistikScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Text(title, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11, fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
-          Text(amount, style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(amount, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
         ],
       ),
     );
   }
 
-  Widget _buildCashFlowCard(String amount, String percent) {
+  Widget _buildCashFlowCard(BuildContext context, String amount, String percent) {
     final isPositive = !amount.startsWith('-');
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
@@ -331,7 +331,7 @@ class StatistikScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Text('${isPositive ? '+' : ''}$amount', style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.w800, fontSize: 24)),
+          Text('${isPositive ? '+' : ''}$amount', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800, fontSize: 24)),
           const SizedBox(height: 4),
           Text('$percent% dari pemasukan tersisa', style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12)),
         ],
@@ -356,14 +356,14 @@ class StatistikScreen extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Tren Pengeluaran Harian', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0D1C44))),
+              Text('Tren Pengeluaran Harian', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 32),
               SizedBox(
                 height: 200,
@@ -419,7 +419,7 @@ class StatistikScreen extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
             ),
@@ -430,14 +430,14 @@ class StatistikScreen extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Distribusi Pengeluaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0D1C44))),
+              Text('Distribusi Pengeluaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 32),
               SizedBox(
                 height: 200,
@@ -465,7 +465,7 @@ class StatistikScreen extends StatelessWidget {
                 runSpacing: 8,
                 children: categoryData.keys.map((catName) {
                   final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == catName, orElse: () => AppCategories.expenseCategories.last);
-                  return _buildLegend(cat.color, catName);
+                  return _buildLegend(context, cat.color, catName);
                 }).toList(),
               ),
             ],
@@ -475,17 +475,18 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLegend(Color color, String label) {
+  Widget _buildLegend(BuildContext context, Color color, String label) {
     return Row(
       children: [
         Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+        Text(label, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
       ],
     );
   }
 
-  Widget _buildFinancialPlanner(double income, double expense) {
+  Widget _buildFinancialPlanner(BuildContext context, double income, double expense) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final expenseRatio = income > 0 ? (expense / income) : 0.0;
     final savingCapacity = income > 0 ? ((income - expense) / income) : 0.0;
     
@@ -502,7 +503,7 @@ class StatistikScreen extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
@@ -519,7 +520,7 @@ class StatistikScreen extends StatelessWidget {
                   child: Icon(Icons.auto_awesome, color: Colors.purple.shade400, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Text('Financial Planner', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('Financial Planner', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
                 const Spacer(),
                 const Text('👍', style: TextStyle(fontSize: 20)),
               ],
@@ -531,9 +532,9 @@ class StatistikScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildTabItem(Icons.pie_chart, 'Overview', true),
-                _buildTabItem(Icons.thumb_up_alt_outlined, 'Tips', false),
-                _buildTabItem(Icons.rocket_launch_outlined, 'Roadmap', false),
+                _buildTabItem(context, Icons.pie_chart, 'Overview', true),
+                _buildTabItem(context, Icons.thumb_up_alt_outlined, 'Tips', false),
+                _buildTabItem(context, Icons.rocket_launch_outlined, 'Roadmap', false),
               ],
             ),
           ),
@@ -544,7 +545,7 @@ class StatistikScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFF2F7FF),
+                color: isDark ? const Color(0xFF1D1E33) : const Color(0xFFF2F7FF),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.blue.shade100, width: 1),
               ),
@@ -554,7 +555,7 @@ class StatistikScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Financial Health Score', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 15)),
+                        Text('Financial Health Score', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15)),
                         const SizedBox(height: 8),
                         Text(
                           healthScore > 70 ? 'Bagus! Keuangan Anda dalam kondisi baik' : 'Ayo tingkatkan kapasitas menabung Anda!',
@@ -591,9 +592,9 @@ class StatistikScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Row(
               children: [
-                Expanded(child: _buildMetricCard(title: 'Debt Ratio', value: '0.00x', target: '< 0.5x', isGood: true, icon: Icons.arrow_outward)),
+                Expanded(child: _buildMetricCard(context: context, title: 'Debt Ratio', value: '0.00x', target: '< 0.5x', isGood: true, icon: Icons.arrow_outward)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildMetricCard(title: 'Expense\nRatio', value: '${(expenseRatio * 100).toStringAsFixed(0)}%', target: '< 70%', isGood: expenseRatio < 0.7, icon: expenseRatio < 0.7 ? Icons.arrow_outward : Icons.south_east)),
+                Expanded(child: _buildMetricCard(context: context, title: 'Expense\nRatio', value: '${(expenseRatio * 100).toStringAsFixed(0)}%', target: '< 70%', isGood: expenseRatio < 0.7, icon: expenseRatio < 0.7 ? Icons.arrow_outward : Icons.south_east)),
               ],
             ),
           ),
@@ -602,9 +603,9 @@ class StatistikScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Row(
               children: [
-                Expanded(child: _buildMetricCard(title: 'Saving\nCapacity', value: '${(savingCapacity * 100).toStringAsFixed(0)}%', target: '> 20%', isGood: savingCapacity > 0.2, icon: savingCapacity > 0.2 ? Icons.arrow_outward : Icons.south_east)),
+                Expanded(child: _buildMetricCard(context: context, title: 'Saving\nCapacity', value: '${(savingCapacity * 100).toStringAsFixed(0)}%', target: '> 20%', isGood: savingCapacity > 0.2, icon: savingCapacity > 0.2 ? Icons.arrow_outward : Icons.south_east)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildMetricCard(title: 'Asset\nCoverage', value: 'No Debt', target: '> 1.5x', isGood: true, icon: Icons.arrow_outward)),
+                Expanded(child: _buildMetricCard(context: context, title: 'Asset\nCoverage', value: 'No Debt', target: '> 1.5x', isGood: true, icon: Icons.arrow_outward)),
               ],
             ),
           ),
@@ -616,21 +617,22 @@ class StatistikScreen extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 20.0),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFF4F7FF),
+              color: isDark ? const Color(0xFF1D1E33) : const Color(0xFFF4F7FF),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
+                  children: [
                     Icon(Icons.lightbulb_outline, color: Color(0xFF1E60FE), size: 18),
                     SizedBox(width: 8),
-                    Text('Penjelasan Metrik Keuangan', style: TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.w600, fontSize: 13)),
+                    Text('Penjelasan Metrik Keuangan', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600, fontSize: 13)),
                   ],
                 ),
                 const SizedBox(height: 16),
                 _buildExplanationCard(
+                  context: context,
                   title: 'Debt Ratio',
                   description: 'Perbandingan total hutang dengan total aset. Semakin rendah semakin baik. Target ideal < 0.5x artinya hutang tidak boleh lebih dari setengah total aset Anda.',
                   iconBgColor: Colors.orange.shade50,
@@ -638,6 +640,7 @@ class StatistikScreen extends StatelessWidget {
                   iconColor: Colors.orange.shade400,
                 ),
                 _buildExplanationCard(
+                  context: context,
                   title: 'Expense Ratio',
                   description: 'Persentase pengeluaran dari total pendapatan bulanan. Target ideal < 70% artinya maksimal 70% pendapatan untuk pengeluaran, sisanya untuk tabungan.',
                   iconBgColor: Colors.green.shade50,
@@ -645,6 +648,7 @@ class StatistikScreen extends StatelessWidget {
                   iconColor: Colors.green.shade400,
                 ),
                 _buildExplanationCard(
+                  context: context,
                   title: 'Saving Capacity',
                   description: 'Kemampuan menabung dari pendapatan bulanan. Target ideal > 20% artinya minimal 20% pendapatan harus ditabung untuk masa depan.',
                   iconBgColor: Colors.blue.shade50,
@@ -652,6 +656,7 @@ class StatistikScreen extends StatelessWidget {
                   iconColor: Colors.blue.shade400,
                 ),
                 _buildExplanationCard(
+                  context: context,
                   title: 'Asset Coverage',
                   description: 'Perbandingan total aset dengan total hutang. Target ideal > 1.5x artinya aset harus 1.5 kali lipat dari hutang untuk keamanan finansial.',
                   iconBgColor: Colors.purple.shade50,
@@ -666,12 +671,12 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTabItem(IconData icon, String label, bool isActive) {
+  Widget _buildTabItem(BuildContext context, IconData icon, String label, bool isActive) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: isActive
           ? BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
             )
@@ -690,13 +695,13 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricCard({required String title, required String value, required String target, required bool isGood, required IconData icon}) {
+  Widget _buildMetricCard({required BuildContext context, required String title, required String value, required String target, required bool isGood, required IconData icon}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -706,36 +711,36 @@ class StatistikScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(title, style: const TextStyle(color: Color(0xFF4A4A4A), fontWeight: FontWeight.w600, fontSize: 13, height: 1.2)),
+                child: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.w600, fontSize: 13, height: 1.2)),
               ),
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isGood ? Colors.green.shade50 : Colors.red.shade50,
+                  color: isGood ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: isGood ? Colors.green.shade600 : Colors.red.shade600, size: 14),
+                child: Icon(icon, color: isGood ? Colors.green : Colors.red, size: 14),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(value, style: TextStyle(color: isGood ? Colors.green.shade700 : Colors.red.shade700, fontWeight: FontWeight.w800, fontSize: 18)),
+          Text(value, style: TextStyle(color: isGood ? Colors.green : Colors.red, fontWeight: FontWeight.w800, fontSize: 18)),
           const SizedBox(height: 4),
-          Text('Target: $target', style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
+          Text('Target: $target', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 11)),
         ],
       ),
     );
   }
 
-  Widget _buildExplanationCard({required String title, required String description, required Color iconBgColor, required IconData icon, required Color iconColor}) {
+  Widget _buildExplanationCard({required BuildContext context, required String title, required String description, required Color iconBgColor, required IconData icon, required Color iconColor}) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,9 +751,9 @@ class StatistikScreen extends StatelessWidget {
             child: Icon(icon, color: iconColor, size: 16),
           ),
           const SizedBox(height: 12),
-          Text(title, style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 14)),
           const SizedBox(height: 6),
-          Text(description, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12, height: 1.5)),
+          Text(description, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 12, height: 1.5)),
         ],
       ),
     );

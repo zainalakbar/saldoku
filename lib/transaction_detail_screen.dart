@@ -4,57 +4,104 @@ import 'package:provider/provider.dart';
 import 'logic/transaction_model.dart';
 import 'logic/transaction_provider.dart';
 
-class TransactionDetailScreen extends StatelessWidget {
+class TransactionDetailScreen extends StatefulWidget {
   final TransactionType? type; // If null, show all
   final String title;
 
   const TransactionDetailScreen({super.key, this.type, required this.title});
 
   @override
+  State<TransactionDetailScreen> createState() => _TransactionDetailScreenState();
+}
+
+class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = Provider.of<TransactionProvider>(context);
     final now = DateTime.now();
     final transactions = provider.getTransactionsByMonth(now.month, now.year)
-        .where((t) => type == null || t.type == type)
+        .where((t) => widget.type == null || t.type == widget.type)
+        .where((t) => t.title.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
 
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F5FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        title: Text(title, style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold)),
+        title: Text(widget.title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF0D1C44), size: 20),
+          icon: Icon(Icons.arrow_back_ios_new, color: Theme.of(context).colorScheme.onSurface, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
       ),
-      body: transactions.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: transactions.length,
-              itemBuilder: (context, index) {
-                final t = transactions[index];
-                return _buildTransactionItem(context, t, currencyFormatter);
-              },
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _searchQuery = value),
+              decoration: InputDecoration(
+                hintText: 'Cari transaksi...',
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              ),
             ),
+          ),
+          
+          Expanded(
+            child: transactions.isEmpty
+                ? _buildEmptyState(context)
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: transactions.length,
+                    itemBuilder: (context, index) {
+                      final t = transactions[index];
+                      return _buildTransactionItem(context, t, currencyFormatter);
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long, size: 80, color: Colors.grey.shade300),
+          Icon(Icons.receipt_long, size: 80, color: Colors.grey.withOpacity(0.3)),
           const SizedBox(height: 16),
-          const Text('Belum ada transaksi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF4A4A4A))),
+          Text(
+            _searchQuery.isEmpty ? 'Belum ada transaksi' : 'Tidak ditemukan',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+          ),
           const SizedBox(height: 8),
-          const Text('Transaksi bulan ini akan muncul di sini', style: TextStyle(color: Color(0xFF9CA3AF))),
+          Text(
+            _searchQuery.isEmpty ? 'Transaksi bulan ini akan muncul di sini' : 'Coba kata kunci lain',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+          ),
         ],
       ),
     );
@@ -67,7 +114,7 @@ class TransactionDetailScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
@@ -88,11 +135,11 @@ class TransactionDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(t.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                Text(t.title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 4),
                 Text(
                   '${t.category.name} • ${DateFormat('dd MMM yyyy').format(t.date)}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                 ),
               ],
             ),
@@ -124,8 +171,9 @@ class TransactionDetailScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Transaksi'),
-        content: const Text('Apakah Anda yakin ingin menghapus transaksi ini?'),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text('Hapus Transaksi', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        content: Text('Apakah Anda yakin ingin menghapus transaksi ini?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
           TextButton(

@@ -10,6 +10,7 @@ import 'logic/transaction_model.dart';
 import 'logic/transaction_provider.dart';
 import 'logic/financial_provider.dart';
 import 'logic/budget_provider.dart';
+import 'logic/theme_provider.dart';
 import 'logic/financial_models.dart';
 import 'add_transaction_sheet.dart';
 import 'transaction_detail_screen.dart';
@@ -29,17 +30,19 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
         ChangeNotifierProvider(create: (_) => FinancialProvider()),
         ChangeNotifierProvider(create: (_) => BudgetProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp(
-        title: 'Saldoku',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E60FE)),
-          useMaterial3: true,
-          fontFamily: 'Inter',
-          scaffoldBackgroundColor: const Color(0xFFF2F5FB),
-        ),
-        home: const MainScreen(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'Saldoku',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeProvider.themeMode,
+            theme: themeProvider.lightTheme,
+            darkTheme: themeProvider.darkTheme,
+            home: const MainScreen(),
+          );
+        },
       ),
     );
   }
@@ -96,7 +99,7 @@ class _MainScreenState extends State<MainScreen> {
         Container(
           height: 70,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),

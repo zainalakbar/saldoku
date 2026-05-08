@@ -71,4 +71,19 @@ class TransactionProvider with ChangeNotifier {
     _transactions.removeWhere((t) => t.id == id);
     notifyListeners();
   }
+
+  String exportToCSV() {
+    if (_transactions.isEmpty) return '';
+    
+    final StringBuffer buffer = StringBuffer();
+    // Header
+    buffer.writeln('ID,Judul,Nominal,Tipe,Kategori,Tanggal');
+    
+    for (var t in _transactions) {
+      final typeStr = t.type == TransactionType.income ? 'Pemasukan' : 'Pengeluaran';
+      buffer.writeln('${t.id},${t.title},${t.amount},${typeStr},${t.category.name},${t.date.toIso8601String()}');
+    }
+    
+    return buffer.toString();
+  }
 }
