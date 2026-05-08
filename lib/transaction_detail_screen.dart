@@ -138,7 +138,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                 Text(t.title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 4),
                 Text(
-                  '${t.category.name} • ${DateFormat('dd MMM yyyy').format(t.date)}',
+                  '${t.category.name} • ${DateFormat('dd MMM yyyy • HH:mm').format(t.date)}',
                   style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                 ),
               ],

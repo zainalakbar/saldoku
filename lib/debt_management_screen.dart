@@ -248,8 +248,8 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> with Single
                           ),
                         ),
                         Text(
-                          DateFormat('dd MMM yyyy').format(debt.createdAt),
-                          style: TextStyle(fontSize: 12, color: Colors.grey.withOpacity(0.8)),
+                          DateFormat('dd MMM yyyy • HH:mm').format(debt.createdAt),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 11),
                         ),
                       ],
                     ),
