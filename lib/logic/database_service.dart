@@ -109,6 +109,16 @@ class DatabaseService {
     );
   }
 
+  Future<void> updateTransaction(Transaction transaction) async {
+    final db = await database;
+    await db.update(
+      'transactions',
+      transaction.toMap(),
+      where: 'id = ?',
+      whereArgs: [transaction.id],
+    );
+  }
+
   Future<List<Transaction>> getAllTransactions() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('transactions', orderBy: 'date DESC');

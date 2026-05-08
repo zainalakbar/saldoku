@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'logic/transaction_model.dart';
@@ -18,10 +20,12 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   
-   TransactionType _type = TransactionType.expense;
+  TransactionType _type = TransactionType.expense;
   TransactionCategory? _selectedCategory;
   DateTime _selectedDate = DateTime.now();
   FinancialGoal? _selectedGoal;
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -48,6 +52,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
         date: _selectedDate,
         type: _type,
         category: _selectedCategory!,
+        imagePath: _selectedImage?.path,
       );
 
       Provider.of<TransactionProvider>(context, listen: false).addTransaction(transaction);
@@ -82,6 +87,19 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking image: $e");
     }
   }
 
@@ -294,6 +312,62 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                 ),
                 const SizedBox(height: 24),
               ],
+
+              const SizedBox(height: 24),
+              // Image Picker Section
+              const Text('Foto Struk (Opsional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+              const SizedBox(height: 12),
+              if (_selectedImage != null)
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(_selectedImage!, height: 120, width: double.infinity, fit: BoxFit.cover),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedImage = null),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                          child: const Icon(Icons.close, color: Colors.white, size: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt, color: Color(0xFF1E60FE)),
+                        label: const Text('Kamera', style: TextStyle(color: Color(0xFF1E60FE))),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: const BorderSide(color: Color(0xFF1E60FE)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library, color: Color(0xFF1E60FE)),
+                        label: const Text('Galeri', style: TextStyle(color: Color(0xFF1E60FE))),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: const BorderSide(color: Color(0xFF1E60FE)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
               const SizedBox(height: 32),
 

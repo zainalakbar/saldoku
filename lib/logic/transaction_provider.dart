@@ -82,6 +82,15 @@ class TransactionProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateTransaction(Transaction transaction) async {
+    await _dbService.updateTransaction(transaction);
+    final index = _transactions.indexWhere((t) => t.id == transaction.id);
+    if (index != -1) {
+      _transactions[index] = transaction;
+      notifyListeners();
+    }
+  }
+
   String exportToCSV() {
     if (_transactions.isEmpty) return '';
     
