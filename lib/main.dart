@@ -234,6 +234,19 @@ class DashboardScreen extends StatelessWidget {
     final userName = context.watch<ThemeProvider>().userName;
     final initial = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
     
+    // Logic Sapaan Dinamis
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour >= 5 && hour < 11) {
+      greeting = 'Selamat Pagi ☀️';
+    } else if (hour >= 11 && hour < 15) {
+      greeting = 'Selamat Siang ☀️';
+    } else if (hour >= 15 && hour < 18) {
+      greeting = 'Selamat Sore 🌤️';
+    } else {
+      greeting = 'Selamat Malam 🌙';
+    }
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
       child: Row(
@@ -252,7 +265,7 @@ class DashboardScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Selamat Siang ☀️', style: Theme.of(context).textTheme.bodyMedium),
+              Text(greeting, style: Theme.of(context).textTheme.bodyMedium),
               Text(userName, style: Theme.of(context).textTheme.headlineMedium),
             ],
           ),
