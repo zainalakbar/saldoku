@@ -316,7 +316,12 @@ class DashboardScreen extends StatelessWidget {
                     iconBgColor: const Color(0xFFE8F0FF),
                     title: 'Pemasukan',
                     amount: currencyFormatter.format(provider.totalIncome),
-                    onTap: null,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Riwayat Pemasukan'),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -328,7 +333,12 @@ class DashboardScreen extends StatelessWidget {
                     iconBgColor: const Color(0xFFFFEBEE),
                     title: 'Pengeluaran',
                     amount: currencyFormatter.format(provider.totalExpense),
-                    onTap: null,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Riwayat Pengeluaran'),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -448,224 +458,6 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  void _showAsetBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
-        
-        return Consumer<FinancialProvider>(
-          builder: (context, provider, child) {
-            return Container(
-              padding: const EdgeInsets.only(top: 12, left: 20, right: 20, bottom: 40),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Total Aset', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(color: Color(0xFFF3F4F6), shape: BoxShape.circle),
-                          child: const Icon(Icons.close, size: 18, color: Colors.grey),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Blue Gradient Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1E60FE), Color(0xFF548CFF)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(currencyFormatter.format(provider.totalAssetAmount), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                            _showAsetBaruBottomSheet(context);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.add_circle_outline, color: Color(0xFF1E60FE), size: 16),
-                                SizedBox(width: 4),
-                                Text('Aset', style: TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.bold, fontSize: 13)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  if (provider.assets.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Center(child: Text('Belum ada aset.', style: TextStyle(color: Colors.grey))),
-                    )
-                  else
-                    ...provider.assets.map((asset) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-                          border: Border.all(color: Colors.grey.shade100),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(color: asset.color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                              child: Icon(asset.icon, color: asset.color, size: 20),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(asset.name, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12, fontWeight: FontWeight.w500)),
-                                  const SizedBox(height: 4),
-                                  Text(currencyFormatter.format(asset.amount), style: const TextStyle(color: Color(0xFF0D1C44), fontWeight: FontWeight.bold, fontSize: 16)),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                              onPressed: () => provider.deleteAsset(asset.id),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )).toList(),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showAsetBaruBottomSheet(BuildContext context) {
-    final nameController = TextEditingController();
-    final amountController = TextEditingController();
-    
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            padding: const EdgeInsets.only(top: 12, left: 20, right: 20, bottom: 40),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-                ),
-                const SizedBox(height: 20),
-                const Text('Aset Baru', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nama Aset (Misal: Tabungan BCA)',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Nominal Saldo',
-                    prefixText: 'Rp ',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final name = nameController.text;
-                      final amount = double.tryParse(amountController.text) ?? 0;
-                      if (name.isNotEmpty && amount > 0) {
-                        final asset = FinancialAsset(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          name: name,
-                          amount: amount,
-                          type: AssetType.cash,
-                          icon: Icons.account_balance_wallet,
-                          color: const Color(0xFF1E60FE),
-                        );
-                        Provider.of<FinancialProvider>(context, listen: false).addAsset(asset);
-                        Navigator.pop(context);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E60FE),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Simpan Aset', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -1095,12 +887,13 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildSmartInsights(BuildContext context) {
     final budgetProvider = Provider.of<BudgetProvider>(context);
     final financialProvider = Provider.of<FinancialProvider>(context);
+    final transProvider = Provider.of<TransactionProvider>(context);
     
     String message = "Keuanganmu hari ini terlihat stabil gess. Tetap konsisten ya!";
     IconData icon = Icons.auto_awesome;
     Color iconColor = const Color(0xFF1E60FE);
 
-    // Logic for insights
+    // 1. Budget Logic
     bool hasOverBudget = false;
     bool hasWarningBudget = false;
     String categoryName = "";
@@ -1108,7 +901,7 @@ class DashboardScreen extends StatelessWidget {
     for (var cat in AppCategories.expenseCategories) {
       final budget = budgetProvider.getBudgetForCategory(cat.name, DateTime.now().month, DateTime.now().year);
       if (budget != null) {
-        final spending = Provider.of<TransactionProvider>(context, listen: false).getCategorySpending(cat.name, DateTime.now().month, DateTime.now().year);
+        final spending = transProvider.getCategorySpending(cat.name, DateTime.now().month, DateTime.now().year);
         final usage = spending / budget.limitAmount;
         if (usage >= 1.0) {
           hasOverBudget = true; categoryName = cat.name; break;
@@ -1118,9 +911,17 @@ class DashboardScreen extends StatelessWidget {
       }
     }
 
+    // 2. Income vs Expense Logic
+    final expense = transProvider.totalExpense;
+    final income = transProvider.totalIncome;
+
     if (hasOverBudget) {
       message = "Waduh! Pengeluaran $categoryName kamu sudah jebol budget. Rem dulu gess! 🛑";
       icon = Icons.warning_amber_rounded;
+      iconColor = Colors.red;
+    } else if (expense > income && income > 0) {
+      message = "Waduh gess, pengeluaranmu lebih besar dari pemasukan! Atur strategi ya. 💸";
+      icon = Icons.trending_down;
       iconColor = Colors.red;
     } else if (hasWarningBudget) {
       message = "Waspada gess, pengeluaran $categoryName sudah mau habis limitnya. Hati-hati! ⚠️";
@@ -1141,7 +942,7 @@ class DashboardScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: iconColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
           boxShadow: [
@@ -1150,16 +951,12 @@ class DashboardScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: iconColor.withOpacity(0.1), shape: BoxShape.circle),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 14),
+            Icon(icon, color: iconColor, size: 24),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 message,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontSize: 13, fontWeight: FontWeight.w600),
+                style: TextStyle(color: iconColor.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -1436,7 +1233,6 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildTransactionHistory() {
     return const TransactionHistorySection();
   }
-
 }
 
 class TransactionHistorySection extends StatefulWidget {

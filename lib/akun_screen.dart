@@ -2,8 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'logic/theme_provider.dart';
 import 'logic/transaction_provider.dart';
+import 'logic/financial_provider.dart';
+import 'logic/financial_models.dart';
 import 'pin_lock_screen.dart';
 
 class AkunScreen extends StatefulWidget {
@@ -93,6 +96,7 @@ class _AkunScreenState extends State<AkunScreen> {
                   items: [
                     _buildMenuItem(context, Icons.lock_outline, 'Keamanan & PIN', const Color(0xFF1E60FE)),
                     _buildThemeToggle(context, themeProvider),
+                    _buildMenuItem(context, Icons.account_balance_wallet_outlined, 'Dompet & Saldo', const Color(0xFF6366F1)),
                     _buildMenuItem(context, Icons.notifications_none, 'Notifikasi', const Color(0xFFF59E0B)),
                     _buildMenuItem(context, Icons.language, 'Bahasa', const Color(0xFF10B981)),
                   ],
@@ -267,6 +271,8 @@ class _AkunScreenState extends State<AkunScreen> {
                 },
               )),
             );
+          } else if (title == 'Dompet & Saldo') {
+            _showAsetBottomSheet(context);
           } else if (title == 'Backup & Ekspor Data') {
             final csvData = Provider.of<TransactionProvider>(context, listen: false).exportToCSV();
             if (csvData.isEmpty) {
@@ -366,6 +372,223 @@ class _AkunScreenState extends State<AkunScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showAsetBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+        
+        return Consumer<FinancialProvider>(
+          builder: (context, provider, child) {
+            return Container(
+              padding: const EdgeInsets.only(top: 12, left: 20, right: 20, bottom: 40),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Manajemen Aset', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, shape: BoxShape.circle),
+                          child: const Icon(Icons.close, size: 18, color: Colors.grey),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Blue Gradient Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1E60FE), Color(0xFF548CFF)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(currencyFormatter.format(provider.totalAssetAmount), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                        GestureDetector(
+                          onTap: () {
+                            _showAsetBaruBottomSheet(context);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.add_circle_outline, color: Color(0xFF1E60FE), size: 16),
+                                SizedBox(width: 4),
+                                Text('Aset', style: TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.bold, fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  if (provider.assets.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(child: Text('Belum ada aset.', style: TextStyle(color: Colors.grey))),
+                    )
+                  else
+                    ...provider.assets.map((asset) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+                          border: Border.all(color: Theme.of(context).dividerColor),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: asset.color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                              child: Icon(asset.icon, color: asset.color, size: 20),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(asset.name, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w500)),
+                                  const SizedBox(height: 4),
+                                  Text(currencyFormatter.format(asset.amount), style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                              onPressed: () => provider.deleteAsset(asset.id),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )).toList(),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showAsetBaruBottomSheet(BuildContext context) {
+    final nameController = TextEditingController();
+    final amountController = TextEditingController();
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Tambah Aset Baru', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Nama Aset (Misal: Dompet, Bank BCA)',
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Saldo Saat Ini',
+                    prefixText: 'Rp ',
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final amount = double.tryParse(amountController.text) ?? 0.0;
+                      if (nameController.text.isNotEmpty) {
+                        final newAsset = FinancialAsset(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          name: nameController.text,
+                          amount: amount,
+                          type: AssetType.cash, // Default to cash for simplicity
+                          icon: Icons.account_balance_wallet,
+                          color: const Color(0xFF1E60FE),
+                        );
+                        Provider.of<FinancialProvider>(context, listen: false).addAsset(newAsset);
+                        Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E60FE),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Simpan Aset', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

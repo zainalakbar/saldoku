@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await sqfl.openDatabase(
       path,
-      version: 5, // Incremented for debts table
+      version: 9, // Added itemsJson to split_bill_history
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE transactions(
@@ -74,7 +74,25 @@ class DatabaseService {
             type INTEGER,
             createdAt TEXT,
             dueDate TEXT,
+            note TEXT,
             isPaid INTEGER
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE split_bill_history(
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            totalAmount REAL,
+            date TEXT,
+            debtsJson TEXT,
+            usersJson TEXT,
+            itemsJson TEXT
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE friends(
+            id TEXT PRIMARY KEY,
+            name TEXT
           )
         ''');
       },
@@ -94,6 +112,40 @@ class DatabaseService {
               isPaid INTEGER
             )
           ''');
+        }
+        if (oldVersion < 6) {
+          try {
+            await db.execute('ALTER TABLE debts ADD COLUMN note TEXT');
+          } catch (e) {
+            // Column might already exist
+          }
+        }
+        if (oldVersion < 7) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS split_bill_history(
+              id TEXT PRIMARY KEY,
+              title TEXT,
+              totalAmount REAL,
+              date TEXT,
+              debtsJson TEXT,
+              usersJson TEXT
+            )
+          ''');
+        }
+        if (oldVersion < 8) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS friends(
+              id TEXT PRIMARY KEY,
+              name TEXT
+            )
+          ''');
+        }
+        if (oldVersion < 9) {
+          try {
+            await db.execute('ALTER TABLE split_bill_history ADD COLUMN itemsJson TEXT');
+          } catch (e) {
+            // Column might already exist
+          }
         }
       },
     );
@@ -203,5 +255,39 @@ class DatabaseService {
   Future<void> deleteDebt(String id) async {
     final db = await database;
     await db.delete('debts', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Split Bill History CRUD
+  Future<void> insertSplitBillHistory(SplitBillHistory history) async {
+    final db = await database;
+    await db.insert('split_bill_history', history.toMap(), conflictAlgorithm: sqfl.ConflictAlgorithm.replace);
+  }
+
+  Future<List<SplitBillHistory>> getAllSplitBillHistory() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('split_bill_history', orderBy: 'date DESC');
+    return List.generate(maps.length, (i) => SplitBillHistory.fromMap(maps[i]));
+  }
+
+  Future<void> deleteSplitBillHistory(String id) async {
+    final db = await database;
+    await db.delete('split_bill_history', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Friends CRUD
+  Future<void> insertFriend(User friend) async {
+    final db = await database;
+    await db.insert('friends', {'id': friend.id, 'name': friend.name}, conflictAlgorithm: sqfl.ConflictAlgorithm.replace);
+  }
+
+  Future<List<User>> getAllFriends() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('friends', orderBy: 'name ASC');
+    return List.generate(maps.length, (i) => User(id: maps[i]['id'], name: maps[i]['name']));
+  }
+
+  Future<void> deleteFriend(String id) async {
+    final db = await database;
+    await db.delete('friends', where: 'id = ?', whereArgs: [id]);
   }
 }

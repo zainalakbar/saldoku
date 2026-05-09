@@ -6,6 +6,8 @@ class FinancialProvider with ChangeNotifier {
   final List<FinancialAsset> _assets = [];
   final List<FinancialGoal> _goals = [];
   final List<Debt> _debts = [];
+  final List<SplitBillHistory> _splitBillHistory = [];
+  final List<User> _persistentFriends = [];
   final DatabaseService _dbService = DatabaseService();
 
   FinancialProvider() {
@@ -15,6 +17,8 @@ class FinancialProvider with ChangeNotifier {
   List<FinancialAsset> get assets => [..._assets];
   List<FinancialGoal> get goals => [..._goals];
   List<Debt> get debts => [..._debts];
+  List<SplitBillHistory> get splitBillHistory => [..._splitBillHistory];
+  List<User> get persistentFriends => [..._persistentFriends];
 
   double get totalAssetAmount {
     return _assets.fold(0.0, (sum, asset) => sum + asset.amount);
@@ -51,6 +55,14 @@ class FinancialProvider with ChangeNotifier {
 
       _debts.clear();
       _debts.addAll(debtsList);
+
+      final historyList = await _dbService.getAllSplitBillHistory();
+      _splitBillHistory.clear();
+      _splitBillHistory.addAll(historyList);
+
+      final friendsList = await _dbService.getAllFriends();
+      _persistentFriends.clear();
+      _persistentFriends.addAll(friendsList);
       
       notifyListeners();
     } catch (e) {
@@ -92,6 +104,24 @@ class FinancialProvider with ChangeNotifier {
       await _dbService.deleteDebt(id);
     } catch (e) {
       debugPrint('Error deleting debt: $e');
+    }
+  }
+
+  Future<void> clearPaidDebts(DebtType type) async {
+    final idsToRemove = _debts.where((d) => d.type == type && d.isPaid).map((d) => d.id).toList();
+    _debts.removeWhere((d) => idsToRemove.contains(d.id));
+    notifyListeners();
+    for (var id in idsToRemove) {
+      await _dbService.deleteDebt(id);
+    }
+  }
+
+  Future<void> clearAllDebts(DebtType type) async {
+    final idsToRemove = _debts.where((d) => d.type == type).map((d) => d.id).toList();
+    _debts.removeWhere((d) => idsToRemove.contains(d.id));
+    notifyListeners();
+    for (var id in idsToRemove) {
+      await _dbService.deleteDebt(id);
     }
   }
 
@@ -157,6 +187,51 @@ class FinancialProvider with ChangeNotifier {
       await _dbService.deleteGoal(id);
     } catch (e) {
       debugPrint('Error deleting goal: $e');
+    }
+  }
+
+  // Split Bill History Methods
+  Future<void> addSplitBillHistory(SplitBillHistory history) async {
+    _splitBillHistory.insert(0, history);
+    notifyListeners();
+    try {
+      await _dbService.insertSplitBillHistory(history);
+    } catch (e) {
+      debugPrint('Error saving split bill history: $e');
+    }
+  }
+
+  Future<void> deleteSplitBillHistory(String id) async {
+    _splitBillHistory.removeWhere((h) => h.id == id);
+    notifyListeners();
+    try {
+      await _dbService.deleteSplitBillHistory(id);
+    } catch (e) {
+      debugPrint('Error deleting split bill history: $e');
+    }
+  }
+
+  // Persistent Friends Methods
+  Future<void> addFriend(User friend) async {
+    // Check if already exists by name to avoid duplicates
+    if (_persistentFriends.any((f) => f.name.toLowerCase() == friend.name.toLowerCase())) return;
+    
+    _persistentFriends.add(friend);
+    notifyListeners();
+    try {
+      await _dbService.insertFriend(friend);
+    } catch (e) {
+      debugPrint('Error saving friend: $e');
+    }
+  }
+
+  Future<void> deleteFriend(String id) async {
+    _persistentFriends.removeWhere((f) => f.id == id);
+    notifyListeners();
+    try {
+      await _dbService.deleteFriend(id);
+    } catch (e) {
+      debugPrint('Error deleting friend: $e');
     }
   }
 }

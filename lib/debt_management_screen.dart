@@ -116,12 +116,84 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> with Single
     );
   }
 
+  void _showDeleteOptions(BuildContext context) {
+    final type = _tabController.index == 0 ? DebtType.toMe : DebtType.fromMe;
+    final typeName = type == DebtType.toMe ? 'Piutang' : 'Hutang';
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20), decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+            Text('Bersihkan Histori $typeName', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.done_all, color: Colors.green, size: 20),
+              ),
+              title: const Text('Hapus yang SUDAH LUNAS', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Membersihkan catatan yang sudah selesai'),
+              onTap: () {
+                context.read<FinancialProvider>().clearPaidDebts(type);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Catatan lunas berhasil dihapus')));
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.delete_forever, color: Colors.red, size: 20),
+              ),
+              title: const Text('Hapus SEMUA Catatan', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('Menghapus seluruh histori $typeName'),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Konfirmasi'),
+                    content: Text('Yakin mau hapus SEMUA histori $typeName? Data ini tidak bisa dikembalikan.'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+                      TextButton(
+                        onPressed: () {
+                          context.read<FinancialProvider>().clearAllDebts(type);
+                          Navigator.pop(ctx);
+                          Navigator.pop(context);
+                        }, 
+                        child: const Text('Hapus Semua', style: TextStyle(color: Colors.red))
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Manajemen Hutang'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_sweep_outlined),
+            onPressed: () => _showDeleteOptions(context),
+            tooltip: 'Bersihkan Histori',
+          ),
+          const SizedBox(width: 8),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Theme.of(context).primaryColor,
@@ -169,7 +241,7 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> with Single
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 100),
           itemCount: filteredDebts.length,
           itemBuilder: (context, index) {
             final debt = filteredDebts[index];

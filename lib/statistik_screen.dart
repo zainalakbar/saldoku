@@ -105,7 +105,7 @@ class StatistikScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildSmallBalanceCard(context: context, icon: Icons.credit_card, iconColor: const Color(0xFF4A4A4A), iconBgColor: const Color(0xFFF0F0F0), title: 'Total Hutang', amount: currencyFormatter.format(transactionProvider.totalExpense)),
+                        child: _buildSmallBalanceCard(context: context, icon: Icons.credit_card, iconColor: const Color(0xFF4A4A4A), iconBgColor: const Color(0xFFF0F0F0), title: 'Total Hutang', amount: currencyFormatter.format(financialProvider.totalDebtAmount)),
                       ),
                     ],
                   ),
@@ -120,7 +120,7 @@ class StatistikScreen extends StatelessWidget {
                   const SizedBox(height: 32),
                   
                   // Financial Planner
-                  _buildFinancialPlanner(context, monthlyIncome, monthlyExpense),
+                  _buildFinancialPlanner(context, financialProvider, monthlyIncome, monthlyExpense),
                   const SizedBox(height: 32),
 
                   // Trends
@@ -491,7 +491,7 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFinancialPlanner(BuildContext context, double income, double expense) {
+  Widget _buildFinancialPlanner(BuildContext context, FinancialProvider financialProvider, double income, double expense) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final expenseRatio = income > 0 ? (expense / income) : 0.0;
     final savingCapacity = income > 0 ? ((income - expense) / income) : 0.0;
@@ -558,7 +558,7 @@ class StatistikScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Row(
             children: [
-              Expanded(child: _buildMetricCard(context: context, title: 'Debt Ratio', value: '0.00x', target: '< 0.5x', isGood: true, icon: Icons.arrow_outward)),
+              Expanded(child: _buildMetricCard(context: context, title: 'Debt Ratio', value: financialProvider.totalAssetAmount > 0 ? (financialProvider.totalDebtAmount / financialProvider.totalAssetAmount).toStringAsFixed(2) + 'x' : '0.00x', target: '< 0.5x', isGood: financialProvider.totalAssetAmount > 0 ? (financialProvider.totalDebtAmount / financialProvider.totalAssetAmount) < 0.5 : true, icon: Icons.arrow_outward)),
               const SizedBox(width: 12),
               Expanded(child: _buildMetricCard(context: context, title: 'Expense\nRatio', value: '${(expenseRatio * 100).toStringAsFixed(0)}%', target: '< 70%', isGood: expenseRatio < 0.7, icon: expenseRatio < 0.7 ? Icons.arrow_outward : Icons.south_east)),
             ],
@@ -571,7 +571,7 @@ class StatistikScreen extends StatelessWidget {
             children: [
               Expanded(child: _buildMetricCard(context: context, title: 'Saving\nCapacity', value: '${(savingCapacity * 100).toStringAsFixed(0)}%', target: '> 20%', isGood: savingCapacity > 0.2, icon: savingCapacity > 0.2 ? Icons.arrow_outward : Icons.south_east)),
               const SizedBox(width: 12),
-              Expanded(child: _buildMetricCard(context: context, title: 'Asset\nCoverage', value: 'No Debt', target: '> 1.5x', isGood: true, icon: Icons.arrow_outward)),
+              Expanded(child: _buildMetricCard(context: context, title: 'Asset\nCoverage', value: financialProvider.totalDebtAmount > 0 ? (financialProvider.totalAssetAmount / financialProvider.totalDebtAmount).toStringAsFixed(1) + 'x' : 'No Debt', target: '> 1.5x', isGood: financialProvider.totalDebtAmount > 0 ? (financialProvider.totalAssetAmount / financialProvider.totalDebtAmount) > 1.5 : true, icon: Icons.arrow_outward)),
             ],
           ),
         ),
