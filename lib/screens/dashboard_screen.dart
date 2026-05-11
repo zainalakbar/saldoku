@@ -15,6 +15,7 @@ import '../calculator_sheet.dart';
 import '../split_bill_screen.dart';
 import '../debt_management_screen.dart';
 import '../transaction_detail_screen.dart';
+import 'monthly_report_screen.dart';
 
 import '../widgets/dashboard/transaction_history.dart';
 import '../widgets/dashboard/budget_section.dart';
@@ -806,11 +807,12 @@ class DashboardScreen extends StatelessWidget {
           child: Text('Fitur Andalan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0D1C44))),
         ),
         const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 16,
+            alignment: WrapAlignment.start,
             children: [
               _buildFeatureIcon(
                 context, Icons.calculate, 'Kalkulator', const Color(0xFF1E60FE), Colors.blue.shade50,
@@ -844,6 +846,15 @@ class DashboardScreen extends StatelessWidget {
               _buildFeatureIcon(
                 context, Icons.pie_chart, 'Budgeting', const Color(0xFFFF9800), Colors.orange.shade50,
                 onTap: () => _showBudgetBottomSheet(context),
+              ),
+              _buildFeatureIcon(
+                context, Icons.bar_chart_rounded, 'Laporan', const Color(0xFF10B981), Colors.green.shade50,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MonthlyReportScreen()),
+                  );
+                },
               ),
             ],
           ),
