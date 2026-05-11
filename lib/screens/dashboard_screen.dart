@@ -17,6 +17,7 @@ import '../debt_management_screen.dart';
 import '../transaction_detail_screen.dart';
 
 import '../widgets/dashboard/transaction_history.dart';
+import '../widgets/dashboard/budget_section.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -55,6 +56,8 @@ class DashboardScreen extends StatelessWidget {
                 _buildFeatures(context),
                 const SizedBox(height: 24),
                 _buildMonthlySummary(context),
+                const SizedBox(height: 24),
+                const BudgetSection(),
                 const SizedBox(height: 24),
                 _buildTransactionHistory(),
               ],
