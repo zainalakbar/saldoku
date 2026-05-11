@@ -23,6 +23,7 @@ class Transaction {
   final TransactionCategory category;
   final String? note;
   final String? imagePath;
+  final String? assetId;
 
   Transaction({
     required this.id,
@@ -33,6 +34,7 @@ class Transaction {
     required this.category,
     this.note,
     this.imagePath,
+    this.assetId,
   });
 
   // Convert Transaction to Map for SQLite
@@ -46,6 +48,7 @@ class Transaction {
       'categoryName': category.name,
       'note': note,
       'imagePath': imagePath,
+      'assetId': assetId,
     };
   }
 
@@ -61,6 +64,7 @@ class Transaction {
       category: AppCategories.getByName(map['categoryName'], type),
       note: map['note'],
       imagePath: map['imagePath'],
+      assetId: map['assetId'],
     );
   }
 }

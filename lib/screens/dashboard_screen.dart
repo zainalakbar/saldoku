@@ -56,8 +56,6 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 _buildMonthlySummary(context),
                 const SizedBox(height: 24),
-                _buildNotesSection(context),
-                const SizedBox(height: 24),
                 _buildTransactionHistory(),
               ],
             ),
@@ -994,71 +992,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNotesSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Notes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
-              const Text('Lihat Semua', style: TextStyle(fontSize: 13, color: Color(0xFF1E60FE), fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              _buildNotesCard(context),
-              _buildNotesCard(context),
-            ],
-          ),
-        ),
-        const SizedBox(height: 40),
-      ],
-    );
-  }
 
-  Widget _buildNotesCard(BuildContext context) {
-    return Container(
-      width: 200,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 32,
-            width: 32,
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.person, color: Colors.blue.shade700, size: 20),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text('Sisa Saldo New...', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTransactionHistory() {
     return const TransactionHistorySection();

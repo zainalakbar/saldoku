@@ -136,6 +136,28 @@ class FinancialProvider with ChangeNotifier {
     }
   }
 
+  Future<void> updateAssetAmount(String id, double newAmount) async {
+    final index = _assets.indexWhere((a) => a.id == id);
+    if (index != -1) {
+      final oldAsset = _assets[index];
+      final newAsset = FinancialAsset(
+        id: oldAsset.id,
+        name: oldAsset.name,
+        amount: newAmount,
+        type: oldAsset.type,
+        icon: oldAsset.icon,
+        color: oldAsset.color,
+      );
+      _assets[index] = newAsset;
+      notifyListeners();
+      try {
+        await _dbService.insertAsset(newAsset);
+      } catch (e) {
+        debugPrint('Error updating asset amount: $e');
+      }
+    }
+  }
+
   Future<void> deleteAsset(String id) async {
     _assets.removeWhere((a) => a.id == id);
     notifyListeners();

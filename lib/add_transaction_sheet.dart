@@ -24,6 +24,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   TransactionCategory? _selectedCategory;
   DateTime _selectedDate = DateTime.now();
   FinancialGoal? _selectedGoal;
+  FinancialAsset? _selectedAsset;
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
 
@@ -53,10 +54,21 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
         type: _type,
         category: _selectedCategory!,
         imagePath: _selectedImage?.path,
+        assetId: _selectedAsset?.id,
       );
 
       Provider.of<TransactionProvider>(context, listen: false).addTransaction(transaction);
       
+      // Update asset balance if selected
+      if (_selectedAsset != null) {
+        final financialProvider = Provider.of<FinancialProvider>(context, listen: false);
+        final updatedAmount = _type == TransactionType.income 
+            ? _selectedAsset!.amount + amount 
+            : _selectedAsset!.amount - amount;
+            
+        financialProvider.updateAssetAmount(_selectedAsset!.id, updatedAmount);
+      }
+
       // If category is "Menabung", also update the goal
       if (_selectedCategory?.name == 'Menabung' && _selectedGoal != null) {
         Provider.of<FinancialProvider>(context, listen: false).updateGoalAmount(_selectedGoal!.id, amount);
@@ -188,6 +200,56 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
                 validator: (value) => value!.isEmpty ? 'Masukkan keterangan' : null,
+              ),
+              const SizedBox(height: 24),
+
+              // Asset Selector (Account/Wallet)
+              const Text('Pilih Rekening / Dompet', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+              const SizedBox(height: 8),
+              Consumer<FinancialProvider>(
+                builder: (context, finProvider, child) {
+                  final assets = finProvider.assets;
+                  if (assets.isEmpty) {
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
+                      child: const Text('Kamu belum punya rekening. Buat di tab Akun/Profil gess!', style: TextStyle(fontSize: 12, color: Colors.orange)),
+                    );
+                  }
+                  
+                  if (_selectedAsset == null && assets.isNotEmpty) {
+                    _selectedAsset = assets.first;
+                  }
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<FinancialAsset>(
+                        value: _selectedAsset,
+                        isExpanded: true,
+                        items: assets.map((asset) {
+                          return DropdownMenuItem(
+                            value: asset,
+                            child: Row(
+                              children: [
+                                Icon(Icons.account_balance_wallet_outlined, color: Colors.blue.shade700, size: 18),
+                                const SizedBox(width: 12),
+                                Text(asset.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (asset) {
+                          setState(() => _selectedAsset = asset);
+                        },
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
 

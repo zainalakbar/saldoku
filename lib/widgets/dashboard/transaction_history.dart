@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +7,9 @@ import '../../logic/transaction_model.dart';
 import '../../logic/transaction_provider.dart';
 import '../../logic/financial_provider.dart';
 import '../../logic/financial_models.dart';
+import '../../transaction_view_screen.dart';
+import '../../transaction_detail_screen.dart';
+import '../../debt_management_screen.dart';
 
 class TransactionHistorySection extends StatefulWidget {
   const TransactionHistorySection({super.key});
@@ -15,7 +19,8 @@ class TransactionHistorySection extends StatefulWidget {
 }
 
 class _TransactionHistorySectionState extends State<TransactionHistorySection> {
-  bool _isAsetTab = false;
+  bool _isAsetTab = true;
+  bool _isExpanded = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -35,15 +40,15 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Riwayat Transaksi',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Riwayat Transaksi',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                  ),
+                ],
               ),
-              if (_isAsetTab)
-                TextButton(
-                  onPressed: () {},
-                  child: const Text('Lihat Semua', style: TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.bold, fontSize: 13)),
-                ),
             ],
           ),
         ),
@@ -114,7 +119,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                       ],
                     ) : null,
                     alignment: Alignment.center,
-                    child: Text('Aset', style: TextStyle(fontWeight: _isAsetTab ? FontWeight.w600 : FontWeight.w500, color: _isAsetTab ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 14)),
+                    child: Text('Transaksi', style: TextStyle(fontWeight: _isAsetTab ? FontWeight.w600 : FontWeight.w500, color: _isAsetTab ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 14)),
                   ),
                 ),
               ),
@@ -143,13 +148,66 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        
+        // Dynamic Label above the list
+        if (_searchQuery.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E60FE),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _isExpanded ? 'Semua Riwayat' : '3 Transaksi Terbaru',
+                  style: TextStyle(
+                    fontSize: 12, 
+                    fontWeight: FontWeight.w600, 
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)
+                  ),
+                ),
+              ],
+            ),
+          ),
         
         // Content
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           child: _isAsetTab ? _buildAsetContent() : _buildHutangContent(),
         ),
+        
+        // Expandable "Lihat Semua" Button
+        if (_searchQuery.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                icon: Icon(
+                  _isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, 
+                  size: 16, 
+                  color: const Color(0xFF1E60FE)
+                ),
+                label: Text(
+                  _isExpanded ? 'Sembunyikan' : 'Lihat Semua', 
+                  style: const TextStyle(color: Color(0xFF1E60FE), fontWeight: FontWeight.bold, fontSize: 13)
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: const Color(0xFF1E60FE).withOpacity(0.05),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -179,50 +237,59 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: filteredTransactions.length,
+          itemCount: (_isExpanded || _searchQuery.isNotEmpty) ? filteredTransactions.length : min(3, filteredTransactions.length),
           itemBuilder: (context, index) {
             final t = filteredTransactions[index];
             final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
             final isExpense = t.type == TransactionType.expense;
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: t.category.color.withOpacity(0.1),
-                        shape: BoxShape.circle,
+            return GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TransactionViewScreen(transaction: t)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
+                  child: Row(
+                    children: [
+                      Hero(
+                        tag: 'trans_icon_${t.id}',
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: t.category.color.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(t.category.icon, color: t.category.color, size: 20),
+                        ),
                       ),
-                      child: Icon(t.category.icon, color: t.category.color, size: 20),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(t.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                          Text(DateFormat('dd MMM yyyy').format(t.date), style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                        ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(t.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text(DateFormat('dd MMM yyyy').format(t.date), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${isExpense ? '-' : '+'}${currencyFormatter.format(t.amount)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isExpense ? Colors.red : Colors.green,
-                        fontSize: 14,
+                      Text(
+                        '${isExpense ? '-' : '+'}${currencyFormatter.format(t.amount)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isExpense ? Colors.red : Colors.green,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
@@ -257,7 +324,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: allDebts.length,
+          itemCount: (_isExpanded || _searchQuery.isNotEmpty) ? allDebts.length : min(3, allDebts.length),
           itemBuilder: (context, index) {
             final d = allDebts[index];
             final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
@@ -343,7 +410,11 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
           Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Colors.grey)),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              if (buttonLabel == 'Catat Transaksi') {
+                // To be implemented or handled in parent
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E60FE),
               foregroundColor: Colors.white,

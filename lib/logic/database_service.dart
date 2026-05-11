@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await sqfl.openDatabase(
       path,
-      version: 9, // Added itemsJson to split_bill_history
+      version: 10,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE transactions(
@@ -33,7 +33,8 @@ class DatabaseService {
             type INTEGER,
             categoryName TEXT,
             note TEXT,
-            imagePath TEXT
+            imagePath TEXT,
+            assetId TEXT
           )
         ''');
         await db.execute('''
@@ -97,9 +98,6 @@ class DatabaseService {
         ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 4) {
-          // Migration logic omitted for brevity as per instructions, assuming previous tables handled
-        }
         if (oldVersion < 5) {
           await db.execute('''
             CREATE TABLE IF NOT EXISTS debts(
@@ -114,38 +112,23 @@ class DatabaseService {
           ''');
         }
         if (oldVersion < 6) {
-          try {
-            await db.execute('ALTER TABLE debts ADD COLUMN note TEXT');
-          } catch (e) {
-            // Column might already exist
-          }
+          try { await db.execute('ALTER TABLE debts ADD COLUMN note TEXT'); } catch (e) {}
         }
         if (oldVersion < 7) {
           await db.execute('''
             CREATE TABLE IF NOT EXISTS split_bill_history(
-              id TEXT PRIMARY KEY,
-              title TEXT,
-              totalAmount REAL,
-              date TEXT,
-              debtsJson TEXT,
-              usersJson TEXT
+              id TEXT PRIMARY KEY, title TEXT, totalAmount REAL, date TEXT, debtsJson TEXT, usersJson TEXT
             )
           ''');
         }
         if (oldVersion < 8) {
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS friends(
-              id TEXT PRIMARY KEY,
-              name TEXT
-            )
-          ''');
+          await db.execute('CREATE TABLE IF NOT EXISTS friends(id TEXT PRIMARY KEY, name TEXT)');
         }
         if (oldVersion < 9) {
-          try {
-            await db.execute('ALTER TABLE split_bill_history ADD COLUMN itemsJson TEXT');
-          } catch (e) {
-            // Column might already exist
-          }
+          try { await db.execute('ALTER TABLE split_bill_history ADD COLUMN itemsJson TEXT'); } catch (e) {}
+        }
+        if (oldVersion < 10) {
+          try { await db.execute('ALTER TABLE transactions ADD COLUMN assetId TEXT'); } catch (e) {}
         }
       },
     );

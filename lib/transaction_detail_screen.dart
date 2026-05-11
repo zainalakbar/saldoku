@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'logic/transaction_model.dart';
 import 'logic/transaction_provider.dart';
+import 'transaction_view_screen.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
   final TransactionType? type; // If null, show all
@@ -110,59 +111,58 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   Widget _buildTransactionItem(BuildContext context, Transaction t, NumberFormat formatter) {
     final isIncome = t.type == TransactionType.income;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
-        ],
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TransactionViewScreen(transaction: t)),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: t.category.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(t.category.icon, color: t.category.color, size: 22),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(t.title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-                const SizedBox(height: 4),
-                Text(
-                  '${t.category.name} • ${DateFormat('dd MMM yyyy • HH:mm').format(t.date)}',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+          ],
+        ),
+        child: Row(
+          children: [
+            Hero(
+              tag: 'trans_icon_${t.id}',
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: t.category.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-              ],
+                child: Icon(t.category.icon, color: t.category.color, size: 22),
+              ),
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${isIncome ? '+' : '-'}${formatter.format(t.amount)}',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: isIncome ? Colors.green : const Color(0xFFFF5252),
-                ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${t.category.name} • ${DateFormat('dd MMM yyyy • HH:mm').format(t.date)}',
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              GestureDetector(
-                onTap: () => _showDeleteDialog(context, t),
-                child: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFE53935)),
+            ),
+            Text(
+              '${isIncome ? '+' : '-'}${formatter.format(t.amount)}',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: isIncome ? Colors.green : const Color(0xFFFF5252),
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
