@@ -344,12 +344,14 @@ class StatistikScreen extends StatelessWidget {
       builder: (context, provider, child) {
         final now = DateTime.now();
         final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+        final currencyFormatter = NumberFormat.compactCurrency(locale: 'id_ID', symbol: 'Rp');
         
-        // Group spending by day
         final Map<int, double> dailySpending = {};
+        double maxSpending = 100000;
         for (var t in provider.transactions) {
           if (t.date.month == now.month && t.date.year == now.year && t.type == TransactionType.expense) {
             dailySpending[t.date.day] = (dailySpending[t.date.day] ?? 0) + t.amount;
+            if ((dailySpending[t.date.day] ?? 0) > maxSpending) maxSpending = dailySpending[t.date.day]!;
           }
         }
 
@@ -363,15 +365,70 @@ class StatistikScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tren Pengeluaran Harian', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Tren Pengeluaran Harian', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
+                  Icon(Icons.trending_up, color: Colors.blue.shade300, size: 20),
+                ],
+              ),
               const SizedBox(height: 32),
               SizedBox(
-                height: 200,
+                height: 220,
                 child: LineChart(
                   LineChartData(
-                    gridData: const FlGridData(show: false),
-                    titlesData: const FlTitlesData(show: false),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.withOpacity(0.1), strokeWidth: 1),
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: 7, // Show labels every 7 days
+                          getTitlesWidget: (value, meta) {
+                            if (value < 1 || value > daysInMonth) return const SizedBox.shrink();
+                            return Text('${value.toInt()}', style: TextStyle(color: Colors.grey.shade500, fontSize: 10));
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval: maxSpending / 3,
+                          reservedSize: 45,
+                          getTitlesWidget: (value, meta) {
+                            return Text(currencyFormatter.format(value), style: TextStyle(color: Colors.grey.shade500, fontSize: 10));
+                          },
+                        ),
+                      ),
+                    ),
                     borderData: FlBorderData(show: false),
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipColor: (spot) => const Color(0xFF1E60FE),
+                        getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                          return touchedBarSpots.map((barSpot) {
+                            final flSpot = barSpot;
+                            return LineTooltipItem(
+                              'Tgl ${flSpot.x.toInt()}\n',
+                              const TextStyle(color: Colors.white70, fontSize: 10),
+                              children: [
+                                TextSpan(
+                                  text: NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(flSpot.y),
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                ),
+                              ],
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
                     lineBarsData: [
                       LineChartBarData(
                         spots: List.generate(daysInMonth, (index) {
@@ -379,20 +436,23 @@ class StatistikScreen extends StatelessWidget {
                           return FlSpot(day.toDouble(), dailySpending[day] ?? 0);
                         }),
                         isCurved: true,
-                        color: const Color(0xFF1E60FE),
-                        barWidth: 3,
+                        gradient: const LinearGradient(colors: [Color(0xFF1E60FE), Color(0xFF00D2FF)]),
+                        barWidth: 4,
+                        isStrokeCapRound: true,
                         dotData: const FlDotData(show: false),
                         belowBarData: BarAreaData(
                           show: true, 
-                          color: const Color(0xFF1E60FE).withOpacity(0.1),
+                          gradient: LinearGradient(
+                            colors: [const Color(0xFF1E60FE).withOpacity(0.2), const Color(0xFF1E60FE).withOpacity(0.0)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              const Center(child: Text('Tanggal dalam bulan ini', style: TextStyle(fontSize: 11, color: Colors.grey))),
             ],
           ),
         );
@@ -414,6 +474,7 @@ class StatistikScreen extends StatelessWidget {
         }
 
         final totalExpense = categoryData.values.fold(0.0, (sum, val) => sum + val);
+        final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
         if (categoryData.isEmpty) {
           return Container(
@@ -440,38 +501,49 @@ class StatistikScreen extends StatelessWidget {
               Text('Distribusi Pengeluaran', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 32),
               SizedBox(
-                height: 200,
-                child: PieChart(
-                  PieChartData(
-                    sectionsSpace: 4,
-                    centerSpaceRadius: 50,
-                    pieTouchData: PieTouchData(
-                      touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                        // Logic for tooltip or highlight
-                      },
+                height: 220,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    PieChart(
+                      PieChartData(
+                        sectionsSpace: 4,
+                        centerSpaceRadius: 65,
+                        sections: categoryData.entries.map((entry) {
+                          final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == entry.key, orElse: () => AppCategories.expenseCategories.last);
+                          final percentage = (entry.value / totalExpense) * 100;
+                          return PieChartSectionData(
+                            color: cat.color,
+                            value: entry.value,
+                            title: percentage >= 8 ? '${percentage.toStringAsFixed(0)}%' : '',
+                            radius: 35,
+                            titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                            showTitle: true,
+                          );
+                        }).toList(),
+                      ),
                     ),
-                    sections: categoryData.entries.map((entry) {
-                      final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == entry.key, orElse: () => AppCategories.expenseCategories.last);
-                      final percentage = (entry.value / totalExpense) * 100;
-                      return PieChartSectionData(
-                        color: cat.color,
-                        value: entry.value,
-                        title: percentage >= 10 ? '${percentage.toStringAsFixed(0)}%' : '',
-                        radius: 50,
-                        titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-                        showTitle: true,
-                      );
-                    }).toList(),
-                  ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Total', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+                        const SizedBox(height: 4),
+                        Text(
+                          NumberFormat.compactCurrency(locale: 'id_ID', symbol: 'Rp').format(totalExpense),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 24),
               Wrap(
                 spacing: 16,
-                runSpacing: 8,
-                children: categoryData.keys.map((catName) {
-                  final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == catName, orElse: () => AppCategories.expenseCategories.last);
-                  return _buildLegend(context, cat.color, catName);
+                runSpacing: 10,
+                children: categoryData.entries.map((entry) {
+                  final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == entry.key, orElse: () => AppCategories.expenseCategories.last);
+                  return _buildLegendItem(context, cat.color, entry.key, currencyFormatter.format(entry.value));
                 }).toList(),
               ),
             ],
@@ -481,13 +553,29 @@ class StatistikScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLegend(BuildContext context, Color color, String label) {
-    return Row(
-      children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 8),
-        Text(label, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
-      ],
+  Widget _buildLegendItem(BuildContext context, Color color, String label, String amount) {
+    return Container(
+      width: (MediaQuery.of(context).size.width - 80) / 2,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface, overflow: TextOverflow.ellipsis)),
+                Text(amount, style: const TextStyle(fontSize: 9, color: Colors.grey)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
