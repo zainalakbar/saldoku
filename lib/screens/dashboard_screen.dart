@@ -115,75 +115,86 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildBalanceCards(BuildContext context) {
     final provider = Provider.of<TransactionProvider>(context);
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white, width: 2),
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.blue.withOpacity(0.05),
-              blurRadius: 20,
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 30,
               offset: const Offset(0, 10),
             )
           ],
         ),
-        child: Column(
-          children: [
-            _buildBalanceItem(
-              context: context,
-              icon: Icons.account_balance_wallet,
-              iconColor: const Color(0xFF1E60FE),
-              iconBgColor: const Color(0xFFE8F0FF),
-              title: 'Sisa Saldo',
-              amount: currencyFormatter.format(provider.currentBalance),
-              onTap: null,
-            ),
-            const SizedBox(height: 12),
-            Row(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Column(
               children: [
-                Expanded(
-                  child: _buildBalanceItem(
-                    context: context,
-                    icon: Icons.south_west,
-                    iconColor: const Color(0xFF1E60FE),
-                    iconBgColor: const Color(0xFFE8F0FF),
-                    title: 'Pemasukan',
-                    amount: currencyFormatter.format(provider.totalIncome),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Riwayat Pemasukan'),
+                _buildBalanceItem(
+                  context: context,
+                  icon: Icons.account_balance_wallet,
+                  iconColor: const Color(0xFF1E60FE),
+                  iconBgColor: const Color(0xFFE8F0FF),
+                  title: 'Sisa Saldo',
+                  amount: currencyFormatter.format(provider.currentBalance),
+                  onTap: null,
+                  isMain: true,
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Divider(height: 1, color: Colors.white24),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildBalanceItem(
+                        context: context,
+                        icon: Icons.arrow_downward,
+                        iconColor: const Color(0xFF00C853),
+                        iconBgColor: const Color(0xFFE8F5E9),
+                        title: 'Pemasukan',
+                        amount: currencyFormatter.format(provider.totalIncome),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Riwayat Pemasukan'),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildBalanceItem(
-                    context: context,
-                    icon: Icons.north_east,
-                    iconColor: const Color(0xFFFF5252),
-                    iconBgColor: const Color(0xFFFFEBEE),
-                    title: 'Pengeluaran',
-                    amount: currencyFormatter.format(provider.totalExpense),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Riwayat Pengeluaran'),
+                    Container(height: 40, width: 1, color: Colors.grey.withOpacity(0.1), margin: const EdgeInsets.symmetric(horizontal: 10)),
+                    Expanded(
+                      child: _buildBalanceItem(
+                        context: context,
+                        icon: Icons.arrow_upward,
+                        iconColor: const Color(0xFFFF5252),
+                        iconBgColor: const Color(0xFFFFEBEE),
+                        title: 'Pengeluaran',
+                        amount: currencyFormatter.format(provider.totalExpense),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Riwayat Pengeluaran'),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
+                const SizedBox(height: 20),
+                _buildQuickGoalCard(context),
               ],
             ),
-            const SizedBox(height: 12),
-            _buildQuickGoalCard(context),
-          ],
+          ),
         ),
       ),
     );
@@ -253,45 +264,35 @@ class DashboardScreen extends StatelessWidget {
     required String title,
     required String amount,
     VoidCallback? onTap,
+    bool isMain = false,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.2 : 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
+        padding: EdgeInsets.symmetric(horizontal: isMain ? 4 : 0),
+        color: Colors.transparent,
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(isMain ? 12 : 10),
               decoration: BoxDecoration(
                 color: iconBgColor,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(isMain ? 16 : 12),
               ),
-              child: Icon(icon, color: iconColor, size: 20),
+              child: Icon(icon, color: iconColor, size: isMain ? 24 : 20),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 4),
-                  Text(amount, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: isMain ? 13 : 11, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 2),
+                  Text(amount, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w900, fontSize: isMain ? 24 : 16, letterSpacing: -0.5)),
                 ],
               ),
             ),
-            if (onTap != null) const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
+            if (onTap != null) Icon(Icons.arrow_forward_ios, color: Colors.grey.withOpacity(0.3), size: 14),
           ],
         ),
       ),
@@ -726,7 +727,8 @@ class DashboardScreen extends StatelessWidget {
     
     String message = "Keuanganmu hari ini terlihat stabil gess. Tetap konsisten ya!";
     IconData icon = Icons.auto_awesome;
-    Color iconColor = const Color(0xFF1E60FE);
+    Color color1 = const Color(0xFF1E60FE);
+    Color color2 = const Color(0xFF00D2FF);
 
     bool hasOverBudget = false;
     bool hasWarningBudget = false;
@@ -751,48 +753,64 @@ class DashboardScreen extends StatelessWidget {
     if (hasOverBudget) {
       message = "Waduh! Pengeluaran $categoryName kamu sudah jebol budget. Rem dulu gess! 🛑";
       icon = Icons.warning_amber_rounded;
-      iconColor = Colors.red;
+      color1 = const Color(0xFFFF5252); color2 = const Color(0xFFFF8A80);
     } else if (expense > income && income > 0) {
       message = "Waduh gess, pengeluaranmu lebih besar dari pemasukan! Atur strategi ya. 💸";
       icon = Icons.trending_down;
-      iconColor = Colors.red;
+      color1 = const Color(0xFFFF5252); color2 = const Color(0xFFFF8A80);
     } else if (hasWarningBudget) {
       message = "Waspada gess, pengeluaran $categoryName sudah mau habis limitnya. Hati-hati! ⚠️";
       icon = Icons.info_outline;
-      iconColor = Colors.orange;
+      color1 = Colors.orange; color2 = Colors.amber;
     } else if (financialProvider.goals.isNotEmpty && (financialProvider.goals.first.currentAmount / financialProvider.goals.first.targetAmount) >= 0.9) {
       message = "Dikit lagi! Tabungan '${financialProvider.goals.first.name}' kamu hampir finish. Semangat! 🎉";
       icon = Icons.emoji_events;
-      iconColor = Colors.amber;
-    } else if (budgetProvider.budgets.isEmpty) {
-      message = "Saran: Coba set Budget di tab Statistik biar pengeluaranmu lebih terkontrol gess! 📊";
-      icon = Icons.lightbulb_outline;
-      iconColor = const Color(0xFF1E60FE);
+      color1 = Colors.amber; color2 = Colors.orange;
     }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
-          boxShadow: [
-            BoxShadow(color: iconColor.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))
-          ],
+          gradient: LinearGradient(colors: [color1, color2]),
+          borderRadius: BorderRadius.circular(24),
         ),
-        child: Row(
-          children: [
-            Icon(icon, color: iconColor, size: 24),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: TextStyle(color: iconColor.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [color1.withOpacity(0.2), color2.withOpacity(0.2)]),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color1, size: 22),
               ),
-            ),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SMART INSIGHTS',
+                      style: TextStyle(color: color1, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      message,
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600, height: 1.3),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

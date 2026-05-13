@@ -275,7 +275,29 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(t.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    t.title, 
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (t.imagePath != null && t.imagePath!.isNotEmpty) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1E60FE).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Icon(Icons.image_outlined, size: 10, color: Color(0xFF1E60FE)),
+                                  ),
+                                ],
+                              ],
+                            ),
                             Text(DateFormat('dd MMM yyyy').format(t.date), style: const TextStyle(color: Colors.grey, fontSize: 12)),
                           ],
                         ),
