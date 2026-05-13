@@ -8,21 +8,80 @@ import 'transaction_detail_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-class StatistikScreen extends StatelessWidget {
+class StatistikScreen extends StatefulWidget {
   const StatistikScreen({super.key});
+
+  @override
+  State<StatistikScreen> createState() => _StatistikScreenState();
+}
+
+class _StatistikScreenState extends State<StatistikScreen> {
+  DateTime _selectedDate = DateTime.now();
+
+  void _previousMonth() {
+    setState(() {
+      _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1);
+    });
+  }
+
+  void _nextMonth() {
+    if (_selectedDate.year >= DateTime.now().year && _selectedDate.month >= DateTime.now().month) {
+      return;
+    }
+    setState(() {
+      _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final transactionProvider = Provider.of<TransactionProvider>(context);
     final financialProvider = Provider.of<FinancialProvider>(context);
     
-    final now = DateTime.now();
-    final monthlyIncome = transactionProvider.getMonthlyIncome(now.month, now.year);
-    final monthlyExpense = transactionProvider.getMonthlyExpense(now.month, now.year);
+    final selectedMonth = _selectedDate.month;
+    final selectedYear = _selectedDate.year;
+    
+    final monthlyIncome = transactionProvider.getMonthlyIncome(selectedMonth, selectedYear);
+    final monthlyExpense = transactionProvider.getMonthlyExpense(selectedMonth, selectedYear);
     final cashFlow = monthlyIncome - monthlyExpense;
     final cashFlowPercent = monthlyIncome > 0 ? (cashFlow / monthlyIncome * 100).toStringAsFixed(0) : '0';
+
+    // Last month comparison logic
+    final lastMonth = DateTime(selectedYear, selectedMonth - 1);
+    final lastMonthExpense = transactionProvider.getMonthlyExpense(lastMonth.month, lastMonth.year);
+    final expenseDiff = monthlyExpense - lastMonthExpense;
+    final expenseChangePercent = lastMonthExpense > 0 ? (expenseDiff / lastMonthExpense * 100) : 0.0;
+    
+    // Top Expenses Logic
+    final monthlyTransactions = transactionProvider.getTransactionsByMonth(selectedMonth, selectedYear)
+        .where((t) => t.type == TransactionType.expense)
+        .toList();
+    final Map<String, double> categoryMap = {};
+    for (var t in monthlyTransactions) {
+      categoryMap[t.category.name] = (categoryMap[t.category.name] ?? 0) + t.amount;
+    }
+    final sortedCategories = categoryMap.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final topCategories = sortedCategories.take(3).toList();
     
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+    final now = DateTime.now();
+
+    // Daily Allowance Logic
+    final daysInMonth = DateTime(selectedYear, selectedMonth + 1, 0).day;
+    final currentDay = now.month == selectedMonth && now.year == selectedYear ? now.day : 1;
+    final remainingDays = (daysInMonth - currentDay) + 1;
+    final dailyAllowance = transactionProvider.currentBalance > 0 ? transactionProvider.currentBalance / remainingDays : 0.0;
+
+    // Remaining Budget Logic
+    final budgetProvider = Provider.of<BudgetProvider>(context);
+    final activeBudgets = budgetProvider.budgets.where((b) => b.month == selectedMonth && b.year == selectedYear).toList();
+    final totalBudgetLimit = activeBudgets.fold(0.0, (sum, b) => sum + b.limitAmount);
+    final totalBudgetSpending = activeBudgets.fold(0.0, (sum, b) {
+      final spending = transactionProvider.getCategorySpending(b.categoryName, selectedMonth, selectedYear);
+      return sum + spending;
+    });
+    final remainingBudget = totalBudgetLimit - totalBudgetSpending;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -58,7 +117,7 @@ class StatistikScreen extends StatelessWidget {
                   const SizedBox(height: 32),
                   Text('SALDO', style: Theme.of(context).textTheme.bodySmall?.copyWith(letterSpacing: 1.5, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text(currencyFormatter.format(financialProvider.totalAssetAmount), style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: const Color(0xFF1E60FE))),
+                  Text(currencyFormatter.format(transactionProvider.currentBalance), style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: const Color(0xFF1E60FE))),
                   const SizedBox(height: 24),
                   
                   // Month Selector
@@ -88,6 +147,10 @@ class StatistikScreen extends StatelessWidget {
                     iconBgColor: const Color(0xFFFFEBEE), 
                     title: 'Pengeluaran bulan ini', 
                     amount: currencyFormatter.format(monthlyExpense),
+                    subtitle: lastMonthExpense > 0 
+                        ? '${expenseChangePercent.abs().toStringAsFixed(1)}% ${expenseChangePercent > 0 ? 'lebih boros' : 'lebih hemat'} dari bulan lalu'
+                        : 'Bulan pertama pencatatan',
+                    subtitleColor: expenseChangePercent > 0 ? Colors.red : Colors.green,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -95,17 +158,77 @@ class StatistikScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
+
+                  // Top Expenses Section
+                  if (topCategories.isNotEmpty) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Kategori Terboros', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                        Text('Top 3', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ...topCategories.map((entry) {
+                      final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == entry.key, orElse: () => AppCategories.expenseCategories.last);
+                      final percentage = monthlyExpense > 0 ? (entry.value / monthlyExpense) * 100 : 0.0;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 10, offset: const Offset(0, 4))],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: cat.color.withOpacity(0.1), shape: BoxShape.circle),
+                              child: Icon(cat.icon, color: cat.color, size: 16),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                  Text('${percentage.toStringAsFixed(0)}% dari total belanja', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                ],
+                              ),
+                            ),
+                            Text(currencyFormatter.format(entry.value), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 16),
+                  ],
                   
-                  // Asset & Debt Cards
+                  // Allowance & Budget Cards
                   Row(
                     children: [
                       Expanded(
-                        child: _buildSmallBalanceCard(context: context, icon: Icons.account_balance_wallet, iconColor: const Color(0xFF1E60FE), iconBgColor: const Color(0xFFE8F0FF), title: 'Total Aset', amount: currencyFormatter.format(financialProvider.totalAssetAmount)),
+                        child: _buildSmallBalanceCard(
+                          context: context, 
+                          icon: Icons.timer_outlined, 
+                          iconColor: const Color(0xFF1E60FE), 
+                          iconBgColor: const Color(0xFFE8F0FF), 
+                          title: 'Jatah Harian', 
+                          amount: currencyFormatter.format(dailyAllowance),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildSmallBalanceCard(context: context, icon: Icons.credit_card, iconColor: const Color(0xFF4A4A4A), iconBgColor: const Color(0xFFF0F0F0), title: 'Total Hutang', amount: currencyFormatter.format(financialProvider.totalDebtAmount)),
+                        child: _buildSmallBalanceCard(
+                          context: context, 
+                          icon: Icons.pie_chart_outline, 
+                          iconColor: remainingBudget < 0 ? const Color(0xFFFF5252) : const Color(0xFF00C853), 
+                          iconBgColor: remainingBudget < 0 ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9), 
+                          title: 'Sisa Budget', 
+                          amount: currencyFormatter.format(remainingBudget),
+                        ),
                       ),
                     ],
                   ),
@@ -141,11 +264,12 @@ class StatistikScreen extends StatelessWidget {
 
   Widget _buildBudgetStatus(BuildContext context) {
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
-    final now = DateTime.now();
+    final month = _selectedDate.month;
+    final year = _selectedDate.year;
 
     return Consumer2<BudgetProvider, TransactionProvider>(
       builder: (context, budgetProvider, transProvider, child) {
-        final activeBudgets = budgetProvider.budgets.where((b) => b.month == now.month && b.year == now.year).toList();
+        final activeBudgets = budgetProvider.budgets.where((b) => b.month == month && b.year == year).toList();
         
         if (activeBudgets.isEmpty) return const SizedBox.shrink();
 
@@ -157,7 +281,7 @@ class StatistikScreen extends StatelessWidget {
             ...activeBudgets.map((budget) {
               final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == budget.categoryName, orElse: () => AppCategories.expenseCategories.last);
               final catSpending = transProvider.transactions
-                  .where((t) => t.type == TransactionType.expense && t.category.name == budget.categoryName && t.date.month == now.month && t.date.year == now.year)
+                  .where((t) => t.type == TransactionType.expense && t.category.name == budget.categoryName && t.date.month == month && t.date.year == year)
                   .fold(0.0, (sum, t) => sum + t.amount);
               
               final usage = budget.limitAmount > 0 ? catSpending / budget.limitAmount : 0.0;
@@ -218,9 +342,9 @@ class StatistikScreen extends StatelessWidget {
   }
 
   Widget _buildMonthSelector(BuildContext context, TransactionProvider provider) {
-    final now = DateTime.now();
-    final count = provider.getTransactionsByMonth(now.month, now.year).length;
-    final monthName = DateFormat('MMMM yyyy').format(now);
+    final count = provider.getTransactionsByMonth(_selectedDate.month, _selectedDate.year).length;
+    final monthName = DateFormat('MMMM yyyy').format(_selectedDate);
+    final isLatest = _selectedDate.year >= DateTime.now().year && _selectedDate.month >= DateTime.now().month;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -234,7 +358,10 @@ class StatistikScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(Icons.chevron_left, color: Theme.of(context).colorScheme.onSurface),
+          IconButton(
+            icon: Icon(Icons.chevron_left, color: Theme.of(context).colorScheme.onSurface),
+            onPressed: _previousMonth,
+          ),
           Column(
             children: [
               Text(monthName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
@@ -242,13 +369,16 @@ class StatistikScreen extends StatelessWidget {
               Text('$count transaksi', style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
             ],
           ),
-          const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
+          IconButton(
+            icon: Icon(Icons.chevron_right, color: isLatest ? Colors.grey.shade300 : const Color(0xFF1E60FE)),
+            onPressed: isLatest ? null : _nextMonth,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryItem({required BuildContext context, required IconData icon, required Color iconColor, required Color iconBgColor, required String title, required String amount, VoidCallback? onTap}) {
+  Widget _buildSummaryItem({required BuildContext context, required IconData icon, required Color iconColor, required Color iconBgColor, required String title, required String amount, String? subtitle, Color? subtitleColor, VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -266,7 +396,18 @@ class StatistikScreen extends StatelessWidget {
               child: Icon(icon, color: iconColor, size: 20),
             ),
             const SizedBox(width: 16),
-            Expanded(child: Text(title, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w500))),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w500)),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: TextStyle(color: subtitleColor ?? Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)),
+                  ],
+                ],
+              ),
+            ),
             Text(amount, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(width: 8),
             const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF), size: 18),
@@ -342,14 +483,13 @@ class StatistikScreen extends StatelessWidget {
   Widget _buildTrendChart(BuildContext context) {
     return Consumer<TransactionProvider>(
       builder: (context, provider, child) {
-        final now = DateTime.now();
-        final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+        final daysInMonth = DateTime(_selectedDate.year, _selectedDate.month + 1, 0).day;
         final currencyFormatter = NumberFormat.compactCurrency(locale: 'id_ID', symbol: 'Rp');
         
         final Map<int, double> dailySpending = {};
         double maxSpending = 100000;
         for (var t in provider.transactions) {
-          if (t.date.month == now.month && t.date.year == now.year && t.type == TransactionType.expense) {
+          if (t.date.month == _selectedDate.month && t.date.year == _selectedDate.year && t.type == TransactionType.expense) {
             dailySpending[t.date.day] = (dailySpending[t.date.day] ?? 0) + t.amount;
             if ((dailySpending[t.date.day] ?? 0) > maxSpending) maxSpending = dailySpending[t.date.day]!;
           }
@@ -390,7 +530,7 @@ class StatistikScreen extends StatelessWidget {
                         sideTitles: SideTitles(
                           showTitles: true,
                           reservedSize: 30,
-                          interval: 7, // Show labels every 7 days
+                          interval: 7, 
                           getTitlesWidget: (value, meta) {
                             if (value < 1 || value > daysInMonth) return const SizedBox.shrink();
                             return Text('${value.toInt()}', style: TextStyle(color: Colors.grey.shade500, fontSize: 10));
@@ -463,8 +603,7 @@ class StatistikScreen extends StatelessWidget {
   Widget _buildExpensePieChart(BuildContext context) {
     return Consumer<TransactionProvider>(
       builder: (context, provider, child) {
-        final now = DateTime.now();
-        final monthlyTransactions = provider.getTransactionsByMonth(now.month, now.year)
+        final monthlyTransactions = provider.getTransactionsByMonth(_selectedDate.month, _selectedDate.year)
             .where((t) => t.type == TransactionType.expense)
             .toList();
         
@@ -511,7 +650,7 @@ class StatistikScreen extends StatelessWidget {
                         centerSpaceRadius: 65,
                         sections: categoryData.entries.map((entry) {
                           final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == entry.key, orElse: () => AppCategories.expenseCategories.last);
-                          final percentage = (entry.value / totalExpense) * 100;
+                          final percentage = totalExpense > 0 ? (entry.value / totalExpense) * 100 : 0.0;
                           return PieChartSectionData(
                             color: cat.color,
                             value: entry.value,
@@ -583,6 +722,18 @@ class StatistikScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final expenseRatio = income > 0 ? (expense / income) : 0.0;
     final savingCapacity = income > 0 ? ((income - expense) / income) : 0.0;
+
+    // Budget Usage calculation
+    final budgetProvider = Provider.of<BudgetProvider>(context);
+    final selectedMonth = _selectedDate.month;
+    final selectedYear = _selectedDate.year;
+    final activeBudgets = budgetProvider.budgets.where((b) => b.month == selectedMonth && b.year == selectedYear).toList();
+    final totalLimit = activeBudgets.fold(0.0, (sum, b) => sum + b.limitAmount);
+    final totalSpending = activeBudgets.fold(0.0, (sum, b) {
+      final transProvider = Provider.of<TransactionProvider>(context, listen: false);
+      return sum + transProvider.getCategorySpending(b.categoryName, selectedMonth, selectedYear);
+    });
+    final budgetUsage = totalLimit > 0 ? (totalSpending / totalLimit) : 0.0;
     
     int healthScore = 50;
     if (income > 0) {
@@ -591,6 +742,8 @@ class StatistikScreen extends StatelessWidget {
       
       if (savingCapacity > 0.2) healthScore += 25;
       else if (savingCapacity > 0.1) healthScore += 15;
+    } else if (expense == 0) {
+      healthScore = 100; // No activity yet
     }
 
     return Column(
@@ -646,7 +799,7 @@ class StatistikScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Row(
             children: [
-              Expanded(child: _buildMetricCard(context: context, title: 'Debt Ratio', value: financialProvider.totalAssetAmount > 0 ? (financialProvider.totalDebtAmount / financialProvider.totalAssetAmount).toStringAsFixed(2) + 'x' : '0.00x', target: '< 0.5x', isGood: financialProvider.totalAssetAmount > 0 ? (financialProvider.totalDebtAmount / financialProvider.totalAssetAmount) < 0.5 : true, icon: Icons.arrow_outward)),
+              Expanded(child: _buildMetricCard(context: context, title: 'Saving\nCapacity', value: '${(savingCapacity * 100).toStringAsFixed(0)}%', target: '> 20%', isGood: savingCapacity > 0.2, icon: savingCapacity > 0.2 ? Icons.arrow_outward : Icons.south_east)),
               const SizedBox(width: 12),
               Expanded(child: _buildMetricCard(context: context, title: 'Expense\nRatio', value: '${(expenseRatio * 100).toStringAsFixed(0)}%', target: '< 70%', isGood: expenseRatio < 0.7, icon: expenseRatio < 0.7 ? Icons.arrow_outward : Icons.south_east)),
             ],
@@ -657,9 +810,9 @@ class StatistikScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Row(
             children: [
-              Expanded(child: _buildMetricCard(context: context, title: 'Saving\nCapacity', value: '${(savingCapacity * 100).toStringAsFixed(0)}%', target: '> 20%', isGood: savingCapacity > 0.2, icon: savingCapacity > 0.2 ? Icons.arrow_outward : Icons.south_east)),
+              Expanded(child: _buildMetricCard(context: context, title: 'Budget\nUsage', value: '${(budgetUsage * 100).toStringAsFixed(0)}%', target: '< 100%', isGood: budgetUsage <= 1.0, icon: budgetUsage <= 1.0 ? Icons.check_circle_outline : Icons.warning_amber_rounded)),
               const SizedBox(width: 12),
-              Expanded(child: _buildMetricCard(context: context, title: 'Asset\nCoverage', value: financialProvider.totalDebtAmount > 0 ? (financialProvider.totalAssetAmount / financialProvider.totalDebtAmount).toStringAsFixed(1) + 'x' : 'No Debt', target: '> 1.5x', isGood: financialProvider.totalDebtAmount > 0 ? (financialProvider.totalAssetAmount / financialProvider.totalDebtAmount) > 1.5 : true, icon: Icons.arrow_outward)),
+              Expanded(child: _buildMetricCard(context: context, title: 'Cash Flow\nStatus', value: income >= expense ? 'Surplus' : 'Defisit', target: 'Surplus', isGood: income >= expense, icon: income >= expense ? Icons.trending_up : Icons.trending_down)),
             ],
           ),
         ),
