@@ -6,10 +6,20 @@ import 'logic/transaction_provider.dart';
 import 'transaction_view_screen.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
-  final TransactionType? type; // If null, show all
+  final TransactionType? type; 
   final String title;
+  final String? categoryName;
+  final int? month;
+  final int? year;
 
-  const TransactionDetailScreen({super.key, this.type, required this.title});
+  const TransactionDetailScreen({
+    super.key, 
+    this.type, 
+    required this.title, 
+    this.categoryName,
+    this.month,
+    this.year,
+  });
 
   @override
   State<TransactionDetailScreen> createState() => _TransactionDetailScreenState();
@@ -29,8 +39,12 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<TransactionProvider>(context);
     final now = DateTime.now();
-    final transactions = provider.getTransactionsByMonth(now.month, now.year)
+    final targetMonth = widget.month ?? now.month;
+    final targetYear = widget.year ?? now.year;
+
+    final transactions = provider.getTransactionsByMonth(targetMonth, targetYear)
         .where((t) => widget.type == null || t.type == widget.type)
+        .where((t) => widget.categoryName == null || t.category.name == widget.categoryName)
         .where((t) => t.title.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
 

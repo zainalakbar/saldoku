@@ -4,6 +4,8 @@ import '../notes_screen.dart';
 import '../statistik_screen.dart';
 import '../akun_screen.dart';
 import '../add_transaction_sheet.dart';
+import '../logic/navigation_provider.dart';
+import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -13,8 +15,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
-
   final List<Widget> _screens = [
     const DashboardScreen(),
     const NotesScreen(),
@@ -25,17 +25,21 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onItemTapped(int index) {
     if (index == 2) return; // Ignore the empty space for FAB
-    setState(() {
-      _selectedIndex = index;
-    });
+    Provider.of<NavigationProvider>(context, listen: false).setIndex(index);
   }
 
   @override
   Widget build(BuildContext context) {
+    final navigationProvider = Provider.of<NavigationProvider>(context);
+    final selectedIndex = navigationProvider.selectedIndex;
+
     return Scaffold(
       body: Stack(
         children: [
-          _screens[_selectedIndex],
+          IndexedStack(
+            index: selectedIndex,
+            children: _screens,
+          ),
           // Custom Bottom Nav
           Positioned(
             bottom: 0,
@@ -110,7 +114,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildNavItem(IconData icon, String label, int index) {
-    final isActive = _selectedIndex == index;
+    final selectedIndex = Provider.of<NavigationProvider>(context).selectedIndex;
+    final isActive = selectedIndex == index;
     return Expanded(
       child: GestureDetector(
         onTap: () => _onItemTapped(index),

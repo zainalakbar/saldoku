@@ -15,6 +15,7 @@ import '../calculator_sheet.dart';
 import '../split_bill_screen.dart';
 import '../debt_management_screen.dart';
 import '../transaction_detail_screen.dart';
+import '../logic/navigation_provider.dart';
 import 'monthly_report_screen.dart';
 
 import '../widgets/dashboard/transaction_history.dart';
@@ -146,7 +147,9 @@ class DashboardScreen extends StatelessWidget {
                   iconBgColor: const Color(0xFFE8F0FF),
                   title: 'Sisa Saldo',
                   amount: currencyFormatter.format(provider.currentBalance),
-                  onTap: null,
+                  onTap: () {
+                    context.read<NavigationProvider>().setIndex(3);
+                  },
                   isMain: true,
                 ),
                 const Padding(
