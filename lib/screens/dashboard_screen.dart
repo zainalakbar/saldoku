@@ -865,6 +865,10 @@ class DashboardScreen extends StatelessWidget {
                 },
               ),
               _buildFeatureIcon(
+                context, Icons.savings_outlined, 'Tabungan', const Color(0xFFE91E63), Colors.pink.shade50,
+                onTap: () => _showTabunganBottomSheet(context),
+              ),
+              _buildFeatureIcon(
                 context, Icons.pie_chart, 'Budgeting', const Color(0xFFFF9800), Colors.orange.shade50,
                 onTap: () => _showBudgetBottomSheet(context),
               ),
