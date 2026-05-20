@@ -10,18 +10,25 @@ import 'logic/navigation_provider.dart';
 
 // Screens
 import 'screens/main_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'pin_lock_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
-  runApp(const MyApp());
+  
+  final prefs = await SharedPreferences.getInstance();
+  final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+  
+  runApp(MyApp(hasSeenOnboarding: hasSeenOnboarding));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool hasSeenOnboarding;
+  const MyApp({super.key, required this.hasSeenOnboarding});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +48,9 @@ class MyApp extends StatelessWidget {
             themeMode: themeProvider.themeMode,
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
-            home: themeProvider.isAppLocked ? const PinLockScreen() : const MainScreen(),
+            home: !hasSeenOnboarding 
+                ? const OnboardingScreen() 
+                : (themeProvider.isAppLocked ? const PinLockScreen() : const MainScreen()),
           );
         },
       ),
