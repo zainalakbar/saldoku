@@ -69,6 +69,57 @@ class Transaction {
   }
 }
 
+enum RecurringFrequency { daily, weekly, monthly, yearly }
+
+class RecurringTransaction {
+  final String id;
+  final String title;
+  final double amount;
+  final TransactionType type;
+  final TransactionCategory category;
+  final RecurringFrequency frequency;
+  final DateTime? lastProcessed;
+  final bool isActive;
+
+  RecurringTransaction({
+    required this.id,
+    required this.title,
+    required this.amount,
+    required this.type,
+    required this.category,
+    required this.frequency,
+    this.lastProcessed,
+    this.isActive = true,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'amount': amount,
+      'type': type.index,
+      'categoryName': category.name,
+      'frequency': frequency.index,
+      'lastProcessed': lastProcessed?.toIso8601String(),
+      'isActive': isActive ? 1 : 0,
+    };
+  }
+
+  factory RecurringTransaction.fromMap(Map<String, dynamic> map) {
+    final type = TransactionType.values[map['type']];
+    return RecurringTransaction(
+      id: map['id'],
+      title: map['title'],
+      amount: (map['amount'] as num).toDouble(),
+      type: type,
+      category: AppCategories.getByName(map['categoryName'], type),
+      frequency: RecurringFrequency.values[map['frequency']],
+      lastProcessed: map['lastProcessed'] != null ? DateTime.parse(map['lastProcessed']) : null,
+      isActive: map['isActive'] == 1,
+    );
+  }
+}
+
 // Predefined categories
 class AppCategories {
   static const List<TransactionCategory> incomeCategories = [

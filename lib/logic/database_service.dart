@@ -22,7 +22,7 @@ class DatabaseService {
 
     return await sqfl.openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE transactions(
@@ -96,6 +96,18 @@ class DatabaseService {
             name TEXT
           )
         ''');
+        await db.execute('''
+          CREATE TABLE recurring_transactions(
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            amount REAL,
+            type INTEGER,
+            categoryName TEXT,
+            frequency INTEGER,
+            lastProcessed TEXT,
+            isActive INTEGER
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 5) {
@@ -129,6 +141,14 @@ class DatabaseService {
         }
         if (oldVersion < 10) {
           try { await db.execute('ALTER TABLE transactions ADD COLUMN assetId TEXT'); } catch (e) {}
+        }
+        if (oldVersion < 11) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS recurring_transactions(
+              id TEXT PRIMARY KEY, title TEXT, amount REAL, type INTEGER, 
+              categoryName TEXT, frequency INTEGER, lastProcessed TEXT, isActive INTEGER
+            )
+          ''');
         }
       },
     );
@@ -272,5 +292,27 @@ class DatabaseService {
   Future<void> deleteFriend(String id) async {
     final db = await database;
     await db.delete('friends', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Recurring Transactions CRUD
+  Future<void> insertRecurringTransaction(RecurringTransaction rt) async {
+    final db = await database;
+    await db.insert('recurring_transactions', rt.toMap(), conflictAlgorithm: sqfl.ConflictAlgorithm.replace);
+  }
+
+  Future<void> updateRecurringTransaction(RecurringTransaction rt) async {
+    final db = await database;
+    await db.update('recurring_transactions', rt.toMap(), where: 'id = ?', whereArgs: [rt.id]);
+  }
+
+  Future<List<RecurringTransaction>> getAllRecurringTransactions() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('recurring_transactions');
+    return List.generate(maps.length, (i) => RecurringTransaction.fromMap(maps[i]));
+  }
+
+  Future<void> deleteRecurringTransaction(String id) async {
+    final db = await database;
+    await db.delete('recurring_transactions', where: 'id = ?', whereArgs: [id]);
   }
 }

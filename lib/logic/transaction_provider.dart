@@ -4,11 +4,15 @@ import 'database_service.dart';
 
 class TransactionProvider with ChangeNotifier {
   final List<Transaction> _transactions = [];
+  final List<RecurringTransaction> _recurringTransactions = [];
   final DatabaseService _dbService = DatabaseService();
 
   TransactionProvider() {
     loadTransactions();
+    loadRecurringTransactions().then((_) => _processRecurringTransactions());
   }
+
+  List<RecurringTransaction> get recurringTransactions => [..._recurringTransactions];
 
   List<Transaction> get transactions => [..._transactions];
 
@@ -87,6 +91,97 @@ class TransactionProvider with ChangeNotifier {
     final index = _transactions.indexWhere((t) => t.id == transaction.id);
     if (index != -1) {
       _transactions[index] = transaction;
+      notifyListeners();
+    }
+  }
+
+  // Recurring Transactions CRUD
+  Future<void> loadRecurringTransactions() async {
+    final list = await _dbService.getAllRecurringTransactions();
+    _recurringTransactions.clear();
+    _recurringTransactions.addAll(list);
+    notifyListeners();
+  }
+
+  Future<void> addRecurringTransaction(RecurringTransaction rt) async {
+    await _dbService.insertRecurringTransaction(rt);
+    _recurringTransactions.add(rt);
+    notifyListeners();
+  }
+
+  Future<void> updateRecurringTransaction(RecurringTransaction rt) async {
+    await _dbService.updateRecurringTransaction(rt);
+    final index = _recurringTransactions.indexWhere((t) => t.id == rt.id);
+    if (index != -1) {
+      _recurringTransactions[index] = rt;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteRecurringTransaction(String id) async {
+    await _dbService.deleteRecurringTransaction(id);
+    _recurringTransactions.removeWhere((t) => t.id == id);
+    notifyListeners();
+  }
+
+  Future<void> _processRecurringTransactions() async {
+    final now = DateTime.now();
+    bool addedAny = false;
+
+    for (var i = 0; i < _recurringTransactions.length; i++) {
+      final rt = _recurringTransactions[i];
+      if (!rt.isActive) continue;
+
+      bool shouldProcess = false;
+      if (rt.lastProcessed == null) {
+        shouldProcess = true;
+      } else {
+        final last = rt.lastProcessed!;
+        switch (rt.frequency) {
+          case RecurringFrequency.daily:
+            if (now.difference(last).inDays >= 1 || now.day != last.day) shouldProcess = true;
+            break;
+          case RecurringFrequency.weekly:
+            if (now.difference(last).inDays >= 7) shouldProcess = true;
+            break;
+          case RecurringFrequency.monthly:
+            if (now.year > last.year || now.month > last.month) shouldProcess = true;
+            break;
+          case RecurringFrequency.yearly:
+            if (now.year > last.year) shouldProcess = true;
+            break;
+        }
+      }
+
+      if (shouldProcess) {
+        final newTx = Transaction(
+          id: DateTime.now().millisecondsSinceEpoch.toString() + rt.id.hashCode.toString(),
+          title: rt.title,
+          amount: rt.amount,
+          date: now,
+          type: rt.type,
+          category: rt.category,
+          note: 'Otomatis (Transaksi Rutin)',
+        );
+        await addTransaction(newTx);
+        
+        // Update last processed
+        final updatedRt = RecurringTransaction(
+          id: rt.id,
+          title: rt.title,
+          amount: rt.amount,
+          type: rt.type,
+          category: rt.category,
+          frequency: rt.frequency,
+          lastProcessed: now,
+          isActive: rt.isActive,
+        );
+        await updateRecurringTransaction(updatedRt);
+        addedAny = true;
+      }
+    }
+
+    if (addedAny) {
       notifyListeners();
     }
   }

@@ -8,6 +8,7 @@ import 'logic/transaction_provider.dart';
 import 'logic/financial_provider.dart';
 import 'logic/financial_models.dart';
 import 'pin_lock_screen.dart';
+import 'screens/recurring_transactions_screen.dart';
 
 class AkunScreen extends StatefulWidget {
   const AkunScreen({super.key});
@@ -97,6 +98,7 @@ class _AkunScreenState extends State<AkunScreen> {
                     _buildMenuItem(context, Icons.lock_outline, 'Keamanan & PIN', const Color(0xFF1E60FE)),
                     _buildThemeToggle(context, themeProvider),
                     _buildMenuItem(context, Icons.account_balance_wallet_outlined, 'Dompet & Saldo', const Color(0xFF6366F1)),
+                    _buildMenuItem(context, Icons.autorenew, 'Transaksi Rutin', const Color(0xFF10B981)),
                     _buildMenuItem(context, Icons.notifications_none, 'Notifikasi', const Color(0xFFF59E0B)),
                     _buildMenuItem(context, Icons.language, 'Bahasa', const Color(0xFF10B981)),
                   ],
@@ -270,6 +272,11 @@ class _AkunScreenState extends State<AkunScreen> {
                   );
                 },
               )),
+            );
+          } else if (title == 'Transaksi Rutin') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const RecurringTransactionsScreen()),
             );
           } else if (title == 'Dompet & Saldo') {
             _showAsetBottomSheet(context);
