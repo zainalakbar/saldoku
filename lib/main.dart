@@ -48,9 +48,17 @@ class MyApp extends StatelessWidget {
             themeMode: themeProvider.themeMode,
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
-            home: !hasSeenOnboarding 
-                ? const OnboardingScreen() 
-                : (themeProvider.isAppLocked ? const PinLockScreen() : const MainScreen()),
+            home: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: !hasSeenOnboarding 
+                  ? const OnboardingScreen(key: ValueKey('onboarding')) 
+                  : ((themeProvider.isAppLocked && themeProvider.isPinEnabled)
+                      ? const PinLockScreen(key: ValueKey('pin_lock')) 
+                      : const MainScreen(key: ValueKey('main_screen'))),
+            ),
           );
         },
       ),

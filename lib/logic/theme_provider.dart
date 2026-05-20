@@ -7,6 +7,8 @@ class ThemeProvider with ChangeNotifier {
   String _userName = "Akbar Gg";
   String _userPin = "1234";
   String? _profileImagePath;
+  bool _isPinEnabled = true;
+  bool _isBiometricEnabled = false;
 
   ThemeProvider() {
     _loadFromPrefs();
@@ -17,6 +19,8 @@ class ThemeProvider with ChangeNotifier {
   String get userName => _userName;
   String get userPin => _userPin;
   String? get profileImagePath => _profileImagePath;
+  bool get isPinEnabled => _isPinEnabled;
+  bool get isBiometricEnabled => _isBiometricEnabled;
 
   bool get isDarkMode => _themeMode == ThemeMode.dark;
 
@@ -54,11 +58,26 @@ class ThemeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void setPinEnabled(bool isEnabled) {
+    _isPinEnabled = isEnabled;
+    if (!isEnabled) _isAppLocked = false;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void setBiometricEnabled(bool isEnabled) {
+    _isBiometricEnabled = isEnabled;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     _userName = prefs.getString('user_name') ?? "Akbar Gg";
     _userPin = prefs.getString('user_pin') ?? "1234";
     _profileImagePath = prefs.getString('profile_image_path');
+    _isPinEnabled = prefs.getBool('is_pin_enabled') ?? true;
+    _isBiometricEnabled = prefs.getBool('is_biometric_enabled') ?? false;
     
     final savedTheme = prefs.getString('theme_mode') ?? 'light';
     _themeMode = savedTheme == 'dark' ? ThemeMode.dark : ThemeMode.light;
@@ -71,6 +90,8 @@ class ThemeProvider with ChangeNotifier {
     await prefs.setString('user_name', _userName);
     await prefs.setString('user_pin', _userPin);
     await prefs.setString('theme_mode', _themeMode == ThemeMode.dark ? 'dark' : 'light');
+    await prefs.setBool('is_pin_enabled', _isPinEnabled);
+    await prefs.setBool('is_biometric_enabled', _isBiometricEnabled);
     
     if (_profileImagePath != null) {
       await prefs.setString('profile_image_path', _profileImagePath!);

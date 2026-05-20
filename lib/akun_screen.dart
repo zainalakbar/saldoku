@@ -9,6 +9,7 @@ import 'logic/financial_provider.dart';
 import 'logic/financial_models.dart';
 import 'pin_lock_screen.dart';
 import 'screens/recurring_transactions_screen.dart';
+import 'screens/keamanan_screen.dart';
 
 class AkunScreen extends StatefulWidget {
   const AkunScreen({super.key});
@@ -264,14 +265,7 @@ class _AkunScreenState extends State<AkunScreen> {
           if (title == 'Keamanan & PIN') {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => PinLockScreen(
-                isSettingPin: true,
-                onPinVerified: (newPin) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('PIN Berhasil Disetel ke $newPin'), backgroundColor: Colors.green),
-                  );
-                },
-              )),
+              MaterialPageRoute(builder: (context) => const KeamananScreen()),
             );
           } else if (title == 'Transaksi Rutin') {
             Navigator.push(

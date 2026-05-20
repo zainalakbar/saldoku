@@ -1,35 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:math';
 import 'package:provider/provider.dart';
 import 'logic/theme_provider.dart';
 
 class PinLockScreen extends StatefulWidget {
   final bool isSettingPin;
   final Function(String)? onPinVerified;
+  final int pinLength;
 
-  const PinLockScreen({super.key, this.isSettingPin = false, this.onPinVerified});
+  const PinLockScreen({
+    super.key, 
+    this.isSettingPin = false, 
+    this.onPinVerified,
+    this.pinLength = 4,
+  });
 
   @override
   State<PinLockScreen> createState() => _PinLockScreenState();
 }
 
-class _PinLockScreenState extends State<PinLockScreen> {
+class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProviderStateMixin {
   String _enteredPin = "";
-  final String _correctPin = "1234"; // Mock correct PIN, in real app load from storage
+  String? _firstPin;
+  bool _isSuccess = false;
+  bool _isError = false;
+  late AnimationController _shakeController;
+  late Animation<double> _shakeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _shakeAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut))
+      ..addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _shakeController.dispose();
+    super.dispose();
+  }
+
+  int _getTargetPinLength(BuildContext context) => widget.isSettingPin 
+      ? widget.pinLength 
+      : context.read<ThemeProvider>().userPin.length;
 
   void _onNumberPress(String number) {
-    if (_enteredPin.length < 4) {
+    final int targetLen = _getTargetPinLength(context);
+    if (_enteredPin.length < targetLen && !_isSuccess && !_isError) {
       setState(() {
         _enteredPin += number;
       });
       
-      if (_enteredPin.length == 4) {
-        _verifyPin();
+      if (_enteredPin.length == targetLen) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) _verifyPin();
+        });
       }
     }
   }
 
   void _backspace() {
-    if (_enteredPin.isNotEmpty) {
+    if (_enteredPin.isNotEmpty && !_isSuccess && !_isError) {
       setState(() {
         _enteredPin = _enteredPin.substring(0, _enteredPin.length - 1);
       });
@@ -38,19 +71,56 @@ class _PinLockScreenState extends State<PinLockScreen> {
 
   void _verifyPin() {
     if (widget.isSettingPin) {
-      widget.onPinVerified?.call(_enteredPin);
-      Navigator.pop(context);
+      if (_firstPin == null) {
+        // First entry done, ask for confirmation
+        setState(() {
+          _firstPin = _enteredPin;
+          _enteredPin = "";
+        });
+      } else {
+        // Confirm entry
+        if (_enteredPin == _firstPin) {
+          widget.onPinVerified?.call(_enteredPin);
+          Navigator.pop(context);
+        } else {
+          // Mismatch
+          setState(() {
+            _isError = true;
+          });
+          HapticFeedback.heavyImpact();
+          _shakeController.forward(from: 0.0).then((_) {
+            if (mounted) {
+              setState(() {
+                _enteredPin = "";
+                _isError = false;
+              });
+            }
+          });
+        }
+      }
     } else {
-      if (_enteredPin == _correctPin) {
+      final correctPin = context.read<ThemeProvider>().userPin;
+      if (_enteredPin == correctPin) {
         // Success!
-        context.read<ThemeProvider>().unlockApp();
+        setState(() {
+          _isSuccess = true;
+        });
+        Future.delayed(const Duration(milliseconds: 1000), () {
+          if (mounted) context.read<ThemeProvider>().unlockApp();
+        });
       } else {
         // Fail
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PIN Salah gess!', textAlign: TextAlign.center), backgroundColor: Colors.red),
-        );
         setState(() {
-          _enteredPin = "";
+          _isError = true;
+        });
+        HapticFeedback.heavyImpact();
+        _shakeController.forward(from: 0.0).then((_) {
+          if (mounted) {
+            setState(() {
+              _enteredPin = "";
+              _isError = false;
+            });
+          }
         });
       }
     }
@@ -58,6 +128,14 @@ class _PinLockScreenState extends State<PinLockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final int currentTargetLength = widget.isSettingPin ? widget.pinLength : themeProvider.userPin.length;
+
+    double shakeOffset = 0.0;
+    if (_shakeController.isAnimating) {
+      shakeOffset = sin(_shakeAnimation.value * pi * 4) * 10;
+    }
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -75,67 +153,152 @@ class _PinLockScreenState extends State<PinLockScreen> {
           child: Column(
             children: [
               const SizedBox(height: 60),
-              Icon(Icons.lock_person_rounded, size: 64, color: Theme.of(context).primaryColor),
-              const SizedBox(height: 24),
-              Text(
-                widget.isSettingPin ? 'Setel PIN Baru' : 'Masukkan PIN Kamu',
-                style: Theme.of(context).textTheme.headlineMedium,
+              if (!widget.isSettingPin) ...[
+                // M-Banking style Profile Header
+                CircleAvatar(
+                  radius: 36,
+                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.15),
+                  child: Text(
+                    context.read<ThemeProvider>().userName.isNotEmpty 
+                      ? context.read<ThemeProvider>().userName.substring(0, 1).toUpperCase() 
+                      : 'A',
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Halo, ${context.read<ThemeProvider>().userName}',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+              ] else ...[
+                // Lock Icon for Setting PIN
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                  child: Icon(
+                    _isSuccess ? Icons.lock_open_rounded : (_isError ? Icons.lock_outline : Icons.lock_person_rounded), 
+                    key: ValueKey('$_isSuccess-$_isError'),
+                    size: 64, 
+                    color: _isSuccess ? Colors.green : (_isError ? Colors.red : Theme.of(context).primaryColor),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                child: Text(
+                  _isSuccess 
+                    ? 'Akses Diberikan' 
+                    : (_isError 
+                        ? (widget.isSettingPin && _firstPin != null ? 'PIN tidak cocok!' : 'PIN Salah gess!') 
+                        : (widget.isSettingPin 
+                            ? (_firstPin == null ? 'Setel PIN Baru' : 'Konfirmasi PIN Baru') 
+                            : 'Masukkan PIN Kamu')),
+                  key: ValueKey('$_isSuccess-$_isError-$_firstPin'),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: _isSuccess ? Colors.green : (_isError ? Colors.red : null),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Keamananmu adalah prioritas kami gess',
+                widget.isSettingPin ? 'Keamananmu adalah prioritas kami gess' : 'Silakan masukkan PIN untuk melanjutkan',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 48),
               
               // PIN Dots
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 12),
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: index < _enteredPin.length 
-                        ? Theme.of(context).primaryColor 
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                    ),
-                  );
-                }),
+              Transform.translate(
+                offset: Offset(shakeOffset, 0),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  child: _isSuccess 
+                    ? const SizedBox(height: 16) 
+                    : Row(
+                        key: const ValueKey('dots'),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(currentTargetLength, (index) {
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 12),
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: index < _enteredPin.length 
+                                ? (_isError ? Colors.red : Theme.of(context).primaryColor) 
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                            ),
+                          );
+                        }),
+                      ),
+                ),
               ),
               
               const Spacer(),
               
               // Keypad
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
                 child: Column(
                   children: [
                     _buildRow(['1', '2', '3']),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     _buildRow(['4', '5', '6']),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     _buildRow(['7', '8', '9']),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        const SizedBox(width: 60), // Placeholder for alignment
+                        SizedBox(
+                          width: 70,
+                          height: 70,
+                          child: !widget.isSettingPin 
+                            ? IconButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur Biometrik (Sidik Jari/Face ID) segera hadir!')));
+                                },
+                                icon: const Icon(Icons.fingerprint, size: 36),
+                                color: Theme.of(context).primaryColor,
+                              )
+                            : null,
+                        ),
                         _buildNumberButton('0'),
-                        IconButton(
-                          onPressed: _backspace,
-                          icon: const Icon(Icons.backspace_outlined),
-                          iconSize: 28,
-                          color: Theme.of(context).colorScheme.onSurface,
+                        SizedBox(
+                          width: 70,
+                          height: 70,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTapDown: (_) => _backspace(),
+                              onTap: () {}, // Required for ink ripple
+                              child: Center(
+                                child: Icon(
+                                  Icons.backspace_outlined,
+                                  size: 28,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
+              if (!widget.isSettingPin)
+                TextButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Silakan hubungi Customer Service untuk Reset PIN')));
+                  },
+                  child: Text('Lupa PIN?', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
+                ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -151,29 +314,27 @@ class _PinLockScreenState extends State<PinLockScreen> {
   }
 
   Widget _buildNumberButton(String number) {
-    return InkWell(
-      onTap: () => _onNumberPress(number),
-      borderRadius: BorderRadius.circular(40),
-      child: Container(
-        width: 70,
-        height: 70,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Theme.of(context).colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: Text(
-          number,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+    return Container(
+      width: 70,
+      height: 70,
+      decoration: const BoxDecoration(shape: BoxShape.circle),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTapDown: (_) => _onNumberPress(number),
+          onTap: () {}, // Keep onTap for ripple effect
+          customBorder: const CircleBorder(),
+          splashColor: Theme.of(context).primaryColor.withOpacity(0.2),
+          highlightColor: Theme.of(context).primaryColor.withOpacity(0.1),
+          child: Center(
+            child: Text(
+              number,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
         ),
       ),
     );
   }
 }
+
