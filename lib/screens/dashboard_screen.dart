@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +16,7 @@ import '../debt_management_screen.dart';
 import '../transaction_detail_screen.dart';
 import '../logic/navigation_provider.dart';
 import 'monthly_report_screen.dart';
+import 'recurring_transactions_screen.dart';
 
 import '../widgets/dashboard/transaction_history.dart';
 import '../widgets/dashboard/budget_section.dart';
@@ -26,228 +26,274 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 100),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Background Gradient Header
-          Container(
-            height: 400,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark 
-                  ? [const Color(0xFF1E1E2C), const Color(0xFF0A0E21), const Color(0xFF0A0E21)]
-                  : [const Color(0xFF8BBEFF), const Color(0xFFE2EDFF), const Color(0xFFF2F5FB)],
-              ),
-            ),
-          ),
-          SafeArea(
-            bottom: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 16),
-                _buildBalanceCards(context),
-                const SizedBox(height: 20),
-                _buildSmartInsights(context),
-                const SizedBox(height: 24),
-                _buildFeatures(context),
-                const SizedBox(height: 24),
-                _buildMonthlySummary(context),
-                const SizedBox(height: 24),
-                const BudgetSection(),
-                const SizedBox(height: 24),
-                _buildTransactionHistory(),
-              ],
-            ),
-          ),
+          // Dark blue hero header
+          _buildHeroHeader(context),
+          const SizedBox(height: 24),
+          _buildSmartInsights(context),
+          const SizedBox(height: 24),
+          _buildFeatures(context),
+          const SizedBox(height: 24),
+          _buildMonthlySummary(context),
+          const SizedBox(height: 24),
+          const BudgetSection(),
+          const SizedBox(height: 24),
+          _buildTransactionHistory(),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final userName = context.watch<ThemeProvider>().userName;
+  // ─── HERO HEADER (dark banking style) ───────────────────────────────────
+  Widget _buildHeroHeader(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final provider = Provider.of<TransactionProvider>(context);
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+    final isPrivacy = themeProvider.isPrivacyMode;
+    final userName = themeProvider.userName;
     final initial = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
-    
+
     final hour = DateTime.now().hour;
     String greeting;
-    if (hour >= 5 && hour < 11) {
-      greeting = 'Selamat Pagi ☀️';
-    } else if (hour >= 11 && hour < 15) {
-      greeting = 'Selamat Siang ☀️';
-    } else if (hour >= 15 && hour < 18) {
-      greeting = 'Selamat Sore 🌤️';
-    } else {
-      greeting = 'Selamat Malam 🌙';
-    }
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: const Color(0xFF8B429A),
-            backgroundImage: context.watch<ThemeProvider>().profileImagePath != null
-                ? FileImage(File(context.watch<ThemeProvider>().profileImagePath!))
-                : null,
-            child: context.watch<ThemeProvider>().profileImagePath == null
-                ? Text(initial, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Column(
+    if (hour >= 5 && hour < 11) greeting = 'Selamat Pagi ☀️';
+    else if (hour >= 11 && hour < 15) greeting = 'Selamat Siang ☀️';
+    else if (hour >= 15 && hour < 18) greeting = 'Selamat Sore 🌤️';
+    else greeting = 'Selamat Malam 🌙';
+
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0A1628), Color(0xFF0D2248), Color(0xFF0A1A3A)],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(greeting, style: Theme.of(context).textTheme.bodyMedium),
-              Text(userName, style: Theme.of(context).textTheme.headlineMedium),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+              // Top row: Avatar + name + bell
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: const Color(0xFF1E60FE),
+                    backgroundImage: themeProvider.profileImagePath != null
+                        ? FileImage(File(themeProvider.profileImagePath!))
+                        : null,
+                    child: themeProvider.profileImagePath == null
+                        ? Text(initial, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(greeting, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                      Text(userName, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.notifications_none_outlined, color: Colors.white70, size: 22),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
 
-  Widget _buildBalanceCards(BuildContext context) {
-    final provider = Provider.of<TransactionProvider>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isPrivacy = themeProvider.isPrivacyMode;
+              // Total balance label
+              const Text('Total Saldo', style: TextStyle(color: Colors.white54, fontSize: 14, letterSpacing: 0.3)),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      isPrivacy ? 'Rp ••••••' : currencyFormatter.format(provider.currentBalance),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => themeProvider.setPrivacyMode(!isPrivacy),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        isPrivacy ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        key: ValueKey(isPrivacy),
+                        color: isPrivacy ? const Color(0xFF4F9EFF) : Colors.white38,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
 
-    String maskAmount(String amount) => isPrivacy ? 'Rp ••••••' : amount;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 30,
-              offset: const Offset(0, 10),
-            )
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(32),
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Column(
-              children: [
-                // Main balance row with eye icon
-                GestureDetector(
-                  onTap: () => context.read<NavigationProvider>().setIndex(3),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    color: Colors.transparent,
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F0FF),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(Icons.account_balance_wallet, color: Color(0xFF1E60FE), size: 24),
+              // Pemasukan & Pengeluaran pills
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Riwayat Pemasukan'),
+                      )),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.07),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Sisa Saldo', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 13, fontWeight: FontWeight.w500)),
-                              const SizedBox(height: 2),
-                              Row(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00C853).withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.arrow_downward_rounded, color: Color(0xFF00C853), size: 16),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  const Text('Pemasukan', style: TextStyle(color: Colors.white54, fontSize: 11)),
                                   Text(
-                                    maskAmount(currencyFormatter.format(provider.currentBalance)),
-                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: -0.5),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  GestureDetector(
-                                    onTap: () => themeProvider.setPrivacyMode(!isPrivacy),
-                                    child: AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 200),
-                                      child: Icon(
-                                        isPrivacy ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                        key: ValueKey(isPrivacy),
-                                        size: 18,
-                                        color: isPrivacy
-                                            ? const Color(0xFF6366F1)
-                                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                                      ),
-                                    ),
+                                    isPrivacy ? 'Rp ••••' : currencyFormatter.format(provider.totalIncome),
+                                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        Icon(Icons.arrow_forward_ios, color: Colors.grey.withOpacity(0.3), size: 14),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Divider(height: 1, color: Colors.white24),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildBalanceItem(
-                        context: context,
-                        icon: Icons.arrow_downward,
-                        iconColor: const Color(0xFF00C853),
-                        iconBgColor: const Color(0xFFE8F5E9),
-                        title: 'Pemasukan',
-                        amount: maskAmount(currencyFormatter.format(provider.totalIncome)),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Riwayat Pemasukan'),
-                          ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Riwayat Pengeluaran'),
+                      )),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.07),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF5252).withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.arrow_upward_rounded, color: Color(0xFFFF5252), size: 16),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Pengeluaran', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                                  Text(
+                                    isPrivacy ? 'Rp ••••' : currencyFormatter.format(provider.totalExpense),
+                                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    Container(height: 40, width: 1, color: Colors.grey.withOpacity(0.1), margin: const EdgeInsets.symmetric(horizontal: 10)),
-                    Expanded(
-                      child: _buildBalanceItem(
-                        context: context,
-                        icon: Icons.arrow_upward,
-                        iconColor: const Color(0xFFFF5252),
-                        iconBgColor: const Color(0xFFFFEBEE),
-                        title: 'Pengeluaran',
-                        amount: maskAmount(currencyFormatter.format(provider.totalExpense)),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Riwayat Pengeluaran'),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                _buildQuickGoalCard(context),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
+  // ─── QUICK ACTIONS row (like banking app: Calculator, Split, Hutang, Recurring) ───
+  Widget _buildQuickActions(BuildContext context) {
+    final actions = [
+      {'icon': Icons.calculate_outlined, 'label': 'Kalkulator', 'color': const Color(0xFF1E60FE)},
+      {'icon': Icons.group_outlined, 'label': 'Split Bill', 'color': const Color(0xFF10B981)},
+      {'icon': Icons.account_balance_outlined, 'label': 'Hutang', 'color': const Color(0xFFF59E0B)},
+      {'icon': Icons.autorenew, 'label': 'Rutin', 'color': const Color(0xFF8B5CF6)},
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: actions.map((a) {
+          final color = a['color'] as Color;
+          final icon = a['icon'] as IconData;
+          final label = a['label'] as String;
+          return GestureDetector(
+            onTap: () {
+              if (label == 'Kalkulator') showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => const CalculatorSheet());
+              else if (label == 'Split Bill') Navigator.push(context, MaterialPageRoute(builder: (_) => const SplitBillScreen()));
+              else if (label == 'Hutang') Navigator.push(context, MaterialPageRoute(builder: (_) => const DebtManagementScreen()));
+              else if (label == 'Rutin') Navigator.push(context, MaterialPageRoute(builder: (_) => const RecurringTransactionsScreen()));
+            },
+            child: Column(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: color.withOpacity(0.2)),
+                  ),
+                  child: Icon(icon, color: color, size: 26),
+                ),
+                const SizedBox(height: 8),
+                Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // Kept for backward compat (no longer called but methods must still exist)
+  Widget _buildHeader(BuildContext context) => const SizedBox.shrink();
+  Widget _buildBalanceCards(BuildContext context) => const SizedBox.shrink();
 
   Widget _buildQuickGoalCard(BuildContext context) {
     final financialProvider = Provider.of<FinancialProvider>(context);
@@ -869,9 +915,14 @@ class DashboardScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.0),
-          child: Text('Fitur Andalan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0D1C44))),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Fitur Andalan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         Padding(
@@ -943,26 +994,25 @@ class DashboardScreen extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              height: 54,
-              width: 54,
+              height: 58,
+              width: 58,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.15),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                color: color.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: color.withOpacity(0.22), width: 1.5),
               ),
-              child: Icon(icon, color: color, size: 30),
+              child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 8),
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.w500, height: 1.2),
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+              ),
             ),
           ],
         ),
@@ -979,7 +1029,10 @@ class DashboardScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text('Ringkasan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+          const SizedBox(height: 12),
           _buildSummaryItem(
             context: context,
             icon: Icons.south_west,
