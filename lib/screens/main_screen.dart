@@ -33,10 +33,20 @@ class _MainScreenState extends State<MainScreen> {
     final navigationProvider = Provider.of<NavigationProvider>(context);
     final selectedIndex = navigationProvider.selectedIndex;
 
-    return Scaffold(
-      body: Stack(
+    return PopScope(
+      canPop: selectedIndex == 0,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        
+        if (selectedIndex != 0) {
+          // Future.microtask prevents state update conflicts during pop
+          Future.microtask(() => Provider.of<NavigationProvider>(context, listen: false).setIndex(0));
+        }
+      },
+      child: Scaffold(
+        body: Stack(
         children: [
-          IndexedStack(
+          FadeIndexedStack(
             index: selectedIndex,
             children: _screens,
           ),
@@ -49,7 +59,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildBottomNav() {
@@ -135,6 +145,58 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class FadeIndexedStack extends StatefulWidget {
+  final int index;
+  final List<Widget> children;
+  final Duration duration;
+
+  const FadeIndexedStack({
+    super.key,
+    required this.index,
+    required this.children,
+    this.duration = const Duration(milliseconds: 300),
+  });
+
+  @override
+  State<FadeIndexedStack> createState() => _FadeIndexedStackState();
+}
+
+class _FadeIndexedStackState extends State<FadeIndexedStack> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(FadeIndexedStack oldWidget) {
+    if (widget.index != oldWidget.index) {
+      _controller.forward(from: 0.0);
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _controller,
+      child: IndexedStack(
+        index: widget.index,
+        children: widget.children,
       ),
     );
   }
