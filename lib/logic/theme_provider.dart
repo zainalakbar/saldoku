@@ -11,6 +11,7 @@ class ThemeProvider with ChangeNotifier {
   String? _profileImagePath;
   bool _isPinEnabled = true;
   bool _isBiometricEnabled = false;
+  bool _isPrivacyMode = false;
 
   ThemeProvider() {
     _loadFromPrefs();
@@ -25,6 +26,7 @@ class ThemeProvider with ChangeNotifier {
   String? get profileImagePath => _profileImagePath;
   bool get isPinEnabled => _isPinEnabled;
   bool get isBiometricEnabled => _isBiometricEnabled;
+  bool get isPrivacyMode => _isPrivacyMode;
 
   bool get isDarkMode => _themeMode == ThemeMode.dark;
 
@@ -81,8 +83,14 @@ class ThemeProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setBiometricEnabled(bool isEnabled) {
-    _isBiometricEnabled = isEnabled;
+  void setBiometricEnabled(bool value) {
+    _isBiometricEnabled = value;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void setPrivacyMode(bool value) {
+    _isPrivacyMode = value;
     _saveToPrefs();
     notifyListeners();
   }
@@ -96,6 +104,7 @@ class ThemeProvider with ChangeNotifier {
     _profileImagePath = prefs.getString('profile_image_path');
     _isPinEnabled = prefs.getBool('is_pin_enabled') ?? true;
     _isBiometricEnabled = prefs.getBool('is_biometric_enabled') ?? false;
+    _isPrivacyMode = prefs.getBool('is_privacy_mode') ?? false;
     
     final savedTheme = prefs.getString('theme_mode') ?? 'light';
     _themeMode = savedTheme == 'dark' ? ThemeMode.dark : ThemeMode.light;
@@ -112,6 +121,7 @@ class ThemeProvider with ChangeNotifier {
     await prefs.setString('theme_mode', _themeMode == ThemeMode.dark ? 'dark' : 'light');
     await prefs.setBool('is_pin_enabled', _isPinEnabled);
     await prefs.setBool('is_biometric_enabled', _isBiometricEnabled);
+    await prefs.setBool('is_privacy_mode', _isPrivacyMode);
     
     if (_profileImagePath != null) {
       await prefs.setString('profile_image_path', _profileImagePath!);

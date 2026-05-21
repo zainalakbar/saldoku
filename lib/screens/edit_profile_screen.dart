@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 import '../logic/theme_provider.dart';
+import '../utils/app_notification.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -71,8 +72,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_emailController.text.isNotEmpty) themeProvider.setUserEmail(_emailController.text);
     themeProvider.setUserPhone(_phoneController.text);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profil berhasil diperbarui!', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
+    AppNotification.show(
+      context,
+      message: 'Profil berhasil diperbarui!',
+      type: AppNotificationType.success,
     );
     Navigator.pop(context);
   }

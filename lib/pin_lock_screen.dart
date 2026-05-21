@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:io';
 import 'dart:math';
 import 'package:provider/provider.dart';
+import 'package:local_auth/local_auth.dart';
 import 'logic/theme_provider.dart';
+import 'utils/app_notification.dart';
 
 class PinLockScreen extends StatefulWidget {
   final bool isSettingPin;
@@ -25,8 +28,10 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
   String? _firstPin;
   bool _isSuccess = false;
   bool _isError = false;
+  bool _isBiometricLoading = false;
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
+  final LocalAuthentication _localAuth = LocalAuthentication();
 
   @override
   void initState() {
@@ -34,6 +39,16 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
     _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
     _shakeAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut))
       ..addListener(() => setState(() {}));
+    
+    // Auto trigger biometric on lock screen open (not when setting PIN)
+    if (!widget.isSettingPin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final themeProvider = context.read<ThemeProvider>();
+        if (themeProvider.isBiometricEnabled) {
+          _authenticateWithBiometric();
+        }
+      });
+    }
   }
 
   @override
@@ -45,6 +60,41 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
   int _getTargetPinLength(BuildContext context) => widget.isSettingPin 
       ? widget.pinLength 
       : context.read<ThemeProvider>().userPin.length;
+
+  Future<void> _authenticateWithBiometric() async {
+    setState(() => _isBiometricLoading = true);
+    try {
+      final bool canAuthenticate = await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
+      if (!canAuthenticate) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Perangkat ini tidak mendukung biometrik.'))
+          );
+        }
+        return;
+      }
+
+      final bool didAuthenticate = await _localAuth.authenticate(
+        localizedReason: 'Verifikasi identitasmu untuk membuka Saldoku',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+
+      if (didAuthenticate && mounted) {
+        setState(() { _isSuccess = true; });
+        HapticFeedback.mediumImpact();
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) context.read<ThemeProvider>().unlockApp();
+        });
+      }
+    } catch (e) {
+      // Auth cancelled or error, silently fall back to PIN
+    } finally {
+      if (mounted) setState(() => _isBiometricLoading = false);
+    }
+  }
 
   void _onNumberPress(String number) {
     final int targetLen = _getTargetPinLength(context);
@@ -72,21 +122,16 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
   void _verifyPin() {
     if (widget.isSettingPin) {
       if (_firstPin == null) {
-        // First entry done, ask for confirmation
         setState(() {
           _firstPin = _enteredPin;
           _enteredPin = "";
         });
       } else {
-        // Confirm entry
         if (_enteredPin == _firstPin) {
           widget.onPinVerified?.call(_enteredPin);
           Navigator.pop(context);
         } else {
-          // Mismatch
-          setState(() {
-            _isError = true;
-          });
+          setState(() { _isError = true; });
           HapticFeedback.heavyImpact();
           _shakeController.forward(from: 0.0).then((_) {
             if (mounted) {
@@ -101,18 +146,13 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
     } else {
       final correctPin = context.read<ThemeProvider>().userPin;
       if (_enteredPin == correctPin) {
-        // Success!
-        setState(() {
-          _isSuccess = true;
-        });
+        setState(() { _isSuccess = true; });
+        HapticFeedback.mediumImpact();
         Future.delayed(const Duration(milliseconds: 1000), () {
           if (mounted) context.read<ThemeProvider>().unlockApp();
         });
       } else {
-        // Fail
-        setState(() {
-          _isError = true;
-        });
+        setState(() { _isError = true; });
         HapticFeedback.heavyImpact();
         _shakeController.forward(from: 0.0).then((_) {
           if (mounted) {
@@ -130,6 +170,7 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final int currentTargetLength = widget.isSettingPin ? widget.pinLength : themeProvider.userPin.length;
+    final bool showBiometricButton = !widget.isSettingPin && themeProvider.isBiometricEnabled;
 
     double shakeOffset = 0.0;
     if (_shakeController.isAnimating) {
@@ -154,25 +195,15 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
             children: [
               const SizedBox(height: 60),
               if (!widget.isSettingPin) ...[
-                // M-Banking style Profile Header
-                CircleAvatar(
-                  radius: 36,
-                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.15),
-                  child: Text(
-                    context.read<ThemeProvider>().userName.isNotEmpty 
-                      ? context.read<ThemeProvider>().userName.substring(0, 1).toUpperCase() 
-                      : 'A',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
-                  ),
-                ),
+                // Profile Header with photo support
+                _buildProfileAvatar(themeProvider),
                 const SizedBox(height: 16),
                 Text(
-                  'Halo, ${context.read<ThemeProvider>().userName}',
+                  'Halo, ${themeProvider.userName}',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
               ] else ...[
-                // Lock Icon for Setting PIN
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 400),
                   transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
@@ -256,13 +287,25 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
                         SizedBox(
                           width: 70,
                           height: 70,
-                          child: !widget.isSettingPin 
-                            ? IconButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur Biometrik (Sidik Jari/Face ID) segera hadir!')));
-                                },
-                                icon: const Icon(Icons.fingerprint, size: 36),
-                                color: Theme.of(context).primaryColor,
+                          child: showBiometricButton
+                            ? Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: _isBiometricLoading ? null : _authenticateWithBiometric,
+                                  child: Center(
+                                    child: _isBiometricLoading
+                                      ? SizedBox(
+                                          width: 28,
+                                          height: 28,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            color: Theme.of(context).primaryColor,
+                                          ),
+                                        )
+                                      : Icon(Icons.fingerprint, size: 40, color: Theme.of(context).primaryColor),
+                                  ),
+                                ),
                               )
                             : null,
                         ),
@@ -275,7 +318,7 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
                             child: InkWell(
                               customBorder: const CircleBorder(),
                               onTapDown: (_) => _backspace(),
-                              onTap: () {}, // Required for ink ripple
+                              onTap: () {},
                               child: Center(
                                 child: Icon(
                                   Icons.backspace_outlined,
@@ -306,6 +349,23 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
     );
   }
 
+  Widget _buildProfileAvatar(ThemeProvider themeProvider) {
+    if (themeProvider.profileImagePath != null) {
+      return CircleAvatar(
+        radius: 36,
+        backgroundImage: FileImage(File(themeProvider.profileImagePath!)),
+      );
+    }
+    return CircleAvatar(
+      radius: 36,
+      backgroundColor: Theme.of(context).primaryColor.withOpacity(0.15),
+      child: Text(
+        themeProvider.userName.isNotEmpty ? themeProvider.userName.substring(0, 1).toUpperCase() : 'A',
+        style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+      ),
+    );
+  }
+
   Widget _buildRow(List<String> numbers) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -322,7 +382,7 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
         color: Colors.transparent,
         child: InkWell(
           onTapDown: (_) => _onNumberPress(number),
-          onTap: () {}, // Keep onTap for ripple effect
+          onTap: () {},
           customBorder: const CircleBorder(),
           splashColor: Theme.of(context).primaryColor.withOpacity(0.2),
           highlightColor: Theme.of(context).primaryColor.withOpacity(0.1),
@@ -337,4 +397,3 @@ class _PinLockScreenState extends State<PinLockScreen> with SingleTickerProvider
     );
   }
 }
-

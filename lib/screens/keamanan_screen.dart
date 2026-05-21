@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:local_auth/local_auth.dart';
 import '../logic/theme_provider.dart';
 import '../pin_lock_screen.dart';
+import '../utils/app_notification.dart';
 
 class KeamananScreen extends StatefulWidget {
   const KeamananScreen({super.key});
@@ -58,30 +60,57 @@ class _KeamananScreenState extends State<KeamananScreen> {
                 icon: Icons.fingerprint,
                 iconColor: const Color(0xFF10B981),
                 title: 'Login Biometrik',
-                subtitle: 'Gunakan Sidik Jari atau Face ID',
+                subtitle: 'Gunakan Sidik Jari',
                 value: themeProvider.isBiometricEnabled,
                 enabled: themeProvider.isPinEnabled,
-                onChanged: (val) {
-                  themeProvider.setBiometricEnabled(val);
+                onChanged: (val) async {
                   if (val) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Autentikasi biometrik diaktifkan!')),
+                    final localAuth = LocalAuthentication();
+                    final bool canCheck = await localAuth.canCheckBiometrics || await localAuth.isDeviceSupported();
+                    if (!canCheck) {
+                      if (context.mounted) {
+                        AppNotification.show(
+                          context,
+                          message: 'Perangkat ini tidak mendukung autentikasi biometrik.',
+                          type: AppNotificationType.error,
+                        );
+                      }
+                      return;
+                    }
+                    // Verify with biometric once to confirm setup
+                    final bool didAuth = await localAuth.authenticate(
+                      localizedReason: 'Verifikasi sidik jari untuk mengaktifkan fitur ini',
+                      options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
                     );
+                    if (didAuth && context.mounted) {
+                      themeProvider.setBiometricEnabled(true);
+                      AppNotification.show(
+                        context,
+                        message: 'Login biometrik berhasil diaktifkan!',
+                        type: AppNotificationType.success,
+                      );
+                    }
+                  } else {
+                    themeProvider.setBiometricEnabled(false);
                   }
                 },
               ),
               const SizedBox(height: 24),
-              _buildSectionHeader('Keamanan Tambahan'),
-              _buildMenuItem(
+              _buildSectionHeader('Privasi'),
+              _buildSwitchItem(
                 context: context,
                 icon: Icons.visibility_off_outlined,
                 iconColor: const Color(0xFF6366F1),
                 title: 'Mode Privasi',
-                subtitle: 'Sembunyikan saldo di halaman beranda',
-                enabled: true,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Fitur Mode Privasi akan segera hadir')),
+                subtitle: 'Sembunyikan angka saldo di beranda',
+                value: themeProvider.isPrivacyMode,
+                onChanged: (val) {
+                  themeProvider.setPrivacyMode(val);
+                  AppNotification.show(
+                    context,
+                    message: val ? 'Mode Privasi aktif – Saldo tersembunyi' : 'Mode Privasi dinonaktifkan',
+                    type: val ? AppNotificationType.info : AppNotificationType.warning,
+                    icon: val ? Icons.visibility_off : Icons.visibility,
                   );
                 },
               ),
@@ -281,8 +310,11 @@ class _KeamananScreenState extends State<KeamananScreen> {
         pinLength: length,
         onPinVerified: (newPin) {
           context.read<ThemeProvider>().updatePin(newPin);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('PIN Berhasil Diperbarui!'), backgroundColor: Colors.green),
+          AppNotification.show(
+            context,
+            message: 'PIN berhasil diperbarui!',
+            type: AppNotificationType.success,
+            icon: Icons.lock_outline,
           );
         },
       )),

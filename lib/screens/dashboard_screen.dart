@@ -115,8 +115,12 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildBalanceCards(BuildContext context) {
     final provider = Provider.of<TransactionProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPrivacy = themeProvider.isPrivacyMode;
+
+    String maskAmount(String amount) => isPrivacy ? 'Rp ••••••' : amount;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -140,17 +144,59 @@ class DashboardScreen extends StatelessWidget {
             filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Column(
               children: [
-                _buildBalanceItem(
-                  context: context,
-                  icon: Icons.account_balance_wallet,
-                  iconColor: const Color(0xFF1E60FE),
-                  iconBgColor: const Color(0xFFE8F0FF),
-                  title: 'Sisa Saldo',
-                  amount: currencyFormatter.format(provider.currentBalance),
-                  onTap: () {
-                    context.read<NavigationProvider>().setIndex(3);
-                  },
-                  isMain: true,
+                // Main balance row with eye icon
+                GestureDetector(
+                  onTap: () => context.read<NavigationProvider>().setIndex(3),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    color: Colors.transparent,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F0FF),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.account_balance_wallet, color: Color(0xFF1E60FE), size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Sisa Saldo', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 13, fontWeight: FontWeight.w500)),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Text(
+                                    maskAmount(currencyFormatter.format(provider.currentBalance)),
+                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: -0.5),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () => themeProvider.setPrivacyMode(!isPrivacy),
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 200),
+                                      child: Icon(
+                                        isPrivacy ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                        key: ValueKey(isPrivacy),
+                                        size: 18,
+                                        color: isPrivacy
+                                            ? const Color(0xFF6366F1)
+                                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.arrow_forward_ios, color: Colors.grey.withOpacity(0.3), size: 14),
+                      ],
+                    ),
+                  ),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
@@ -165,7 +211,7 @@ class DashboardScreen extends StatelessWidget {
                         iconColor: const Color(0xFF00C853),
                         iconBgColor: const Color(0xFFE8F5E9),
                         title: 'Pemasukan',
-                        amount: currencyFormatter.format(provider.totalIncome),
+                        amount: maskAmount(currencyFormatter.format(provider.totalIncome)),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -182,7 +228,7 @@ class DashboardScreen extends StatelessWidget {
                         iconColor: const Color(0xFFFF5252),
                         iconBgColor: const Color(0xFFFFEBEE),
                         title: 'Pengeluaran',
-                        amount: currencyFormatter.format(provider.totalExpense),
+                        amount: maskAmount(currencyFormatter.format(provider.totalExpense)),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
