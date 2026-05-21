@@ -10,6 +10,7 @@ import 'logic/financial_models.dart';
 import 'pin_lock_screen.dart';
 import 'screens/recurring_transactions_screen.dart';
 import 'screens/keamanan_screen.dart';
+import 'screens/edit_profile_screen.dart';
 
 class AkunScreen extends StatefulWidget {
   const AkunScreen({super.key});
@@ -19,54 +20,6 @@ class AkunScreen extends StatefulWidget {
 }
 
 class _AkunScreenState extends State<AkunScreen> {
-  // Local variable removed, using Provider instead
-
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    
-    if (pickedFile != null) {
-      if (mounted) {
-        Provider.of<ThemeProvider>(context, listen: false).setProfileImage(pickedFile.path);
-      }
-    }
-  }
-
-
-  void _showEditProfileDialog() {
-    final TextEditingController _controller = TextEditingController(
-      text: Provider.of<ThemeProvider>(context, listen: false).userName
-    );
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        title: Text('Edit Nama Profil', style: Theme.of(context).textTheme.titleLarge),
-        content: TextField(
-          controller: _controller,
-          decoration: InputDecoration(
-            hintText: 'Masukkan nama baru',
-            filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () {
-              if (_controller.text.isNotEmpty) {
-                Provider.of<ThemeProvider>(context, listen: false).setUserName(_controller.text);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,13 +43,23 @@ class _AkunScreenState extends State<AkunScreen> {
                 // Header Profil
                 _buildProfileHeader(context),
                 const SizedBox(height: 32),
+
+                // Grup 0: Profil Pribadi
+                _buildMenuGroup(
+                  context: context,
+                  title: 'Profil Pribadi',
+                  items: [
+                    _buildMenuItem(context, Icons.person_outline, 'Edit Profil & Biodata', const Color(0xFFF43F5E)),
+                  ],
+                ),
+                const SizedBox(height: 24),
                 
                 // Grup 1: Pengaturan Keamanan
                 _buildMenuGroup(
                   context: context,
                   title: 'Keamanan & Pengaturan',
                   items: [
-                    _buildMenuItem(context, Icons.lock_outline, 'Keamanan & PIN', const Color(0xFF1E60FE)),
+                    _buildMenuItem(context, Icons.lock_outline, 'Keamanan & Privasi', const Color(0xFF1E60FE)),
                     _buildThemeToggle(context, themeProvider),
                     _buildMenuItem(context, Icons.account_balance_wallet_outlined, 'Dompet & Saldo', const Color(0xFF6366F1)),
                     _buildMenuItem(context, Icons.autorenew, 'Transaksi Rutin', const Color(0xFF10B981)),
@@ -168,67 +131,83 @@ class _AkunScreenState extends State<AkunScreen> {
           clipBehavior: Clip.none,
           children: [
             GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 100,
-                width: 100,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8B429A),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF8B429A).withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
+              onTap: () {
+                if (themeProvider.profileImagePath != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Scaffold(
+                        backgroundColor: Colors.black,
+                        appBar: AppBar(
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          leading: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                        extendBodyBehindAppBar: true,
+                        body: Center(
+                          child: InteractiveViewer(
+                            panEnabled: true,
+                            minScale: 1.0,
+                            maxScale: 4.0,
+                            child: Hero(
+                              tag: 'profile_photo_hero',
+                              child: Image.file(
+                                File(themeProvider.profileImagePath!),
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ],
-                  image: themeProvider.profileImagePath != null
-                      ? DecorationImage(
-                          image: FileImage(File(themeProvider.profileImagePath!)),
-                          fit: BoxFit.cover,
+                  );
+                }
+              },
+              child: Hero(
+                tag: 'profile_photo_hero',
+                child: Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8B429A),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF8B429A).withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                    image: themeProvider.profileImagePath != null
+                        ? DecorationImage(
+                            image: FileImage(File(themeProvider.profileImagePath!)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: themeProvider.profileImagePath == null
+                      ? Center(
+                          child: Text(
+                            themeProvider.userName.isNotEmpty ? themeProvider.userName[0].toUpperCase() : 'A', 
+                            style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)
+                          ),
                         )
                       : null,
                 ),
-                child: themeProvider.profileImagePath == null
-                    ? Center(
-                        child: Text(
-                          themeProvider.userName.isNotEmpty ? themeProvider.userName[0].toUpperCase() : 'A', 
-                          style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)
-                        ),
-                      )
-                    : null,
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E60FE),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: const Icon(Icons.edit, color: Colors.white, size: 16),
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        GestureDetector(
-          onTap: _showEditProfileDialog,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(Provider.of<ThemeProvider>(context).userName, style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(width: 8),
-              Icon(Icons.edit, size: 18, color: Theme.of(context).primaryColor),
-            ],
-          ),
-        ),
+        Text(Provider.of<ThemeProvider>(context).userName, style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: 4),
-        Text('+62 812 3456 7890', style: Theme.of(context).textTheme.bodyMedium),
+        Text(themeProvider.userEmail, style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }
@@ -262,7 +241,12 @@ class _AkunScreenState extends State<AkunScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          if (title == 'Keamanan & PIN') {
+          if (title == 'Edit Profil & Biodata') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+            );
+          } else if (title == 'Keamanan & Privasi') {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const KeamananScreen()),

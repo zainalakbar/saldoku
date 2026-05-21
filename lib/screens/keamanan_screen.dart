@@ -17,7 +17,7 @@ class _KeamananScreenState extends State<KeamananScreen> {
       builder: (context, themeProvider, child) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Keamanan & Akses'),
+            title: const Text('Keamanan & Privasi'),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, size: 20),
               onPressed: () => Navigator.pop(context),

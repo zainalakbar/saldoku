@@ -5,6 +5,8 @@ class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
   bool _isAppLocked = true; // Start locked for security
   String _userName = "Akbar Gg";
+  String _userEmail = "saldoku@example.com";
+  String _userPhone = "";
   String _userPin = "1234";
   String? _profileImagePath;
   bool _isPinEnabled = true;
@@ -17,6 +19,8 @@ class ThemeProvider with ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   bool get isAppLocked => _isAppLocked;
   String get userName => _userName;
+  String get userEmail => _userEmail;
+  String get userPhone => _userPhone;
   String get userPin => _userPin;
   String? get profileImagePath => _profileImagePath;
   bool get isPinEnabled => _isPinEnabled;
@@ -42,6 +46,18 @@ class ThemeProvider with ChangeNotifier {
 
   void setUserName(String name) {
     _userName = name;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void setUserEmail(String email) {
+    _userEmail = email;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void setUserPhone(String phone) {
+    _userPhone = phone;
     _saveToPrefs();
     notifyListeners();
   }
@@ -74,6 +90,8 @@ class ThemeProvider with ChangeNotifier {
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     _userName = prefs.getString('user_name') ?? "Akbar Gg";
+    _userEmail = prefs.getString('user_email') ?? "saldoku@example.com";
+    _userPhone = prefs.getString('user_phone') ?? "";
     _userPin = prefs.getString('user_pin') ?? "1234";
     _profileImagePath = prefs.getString('profile_image_path');
     _isPinEnabled = prefs.getBool('is_pin_enabled') ?? true;
@@ -88,6 +106,8 @@ class ThemeProvider with ChangeNotifier {
   Future<void> _saveToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', _userName);
+    await prefs.setString('user_email', _userEmail);
+    await prefs.setString('user_phone', _userPhone);
     await prefs.setString('user_pin', _userPin);
     await prefs.setString('theme_mode', _themeMode == ThemeMode.dark ? 'dark' : 'light');
     await prefs.setBool('is_pin_enabled', _isPinEnabled);
