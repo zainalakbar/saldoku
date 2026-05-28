@@ -11,6 +11,7 @@ import 'pin_lock_screen.dart';
 import 'screens/recurring_transactions_screen.dart';
 import 'screens/keamanan_screen.dart';
 import 'screens/edit_profile_screen.dart';
+import 'screens/notification_settings_screen.dart';
 
 class AkunScreen extends StatefulWidget {
   const AkunScreen({super.key});
@@ -61,7 +62,6 @@ class _AkunScreenState extends State<AkunScreen> {
                   items: [
                     _buildMenuItem(context, Icons.lock_outline, 'Keamanan & Privasi', const Color(0xFF1E60FE)),
                     _buildThemeToggle(context, themeProvider),
-                    _buildMenuItem(context, Icons.account_balance_wallet_outlined, 'Dompet & Saldo', const Color(0xFF6366F1)),
                     _buildMenuItem(context, Icons.autorenew, 'Transaksi Rutin', const Color(0xFF10B981)),
                     _buildMenuItem(context, Icons.notifications_none, 'Notifikasi', const Color(0xFFF59E0B)),
                     _buildMenuItem(context, Icons.language, 'Bahasa', const Color(0xFF10B981)),
@@ -78,39 +78,6 @@ class _AkunScreenState extends State<AkunScreen> {
                     _buildMenuItem(context, Icons.help_outline, 'Pusat Bantuan', const Color(0xFF3B82F6)),
                     _buildMenuItem(context, Icons.description_outlined, 'Syarat & Ketentuan', const Color(0xFF6B7280)),
                   ],
-                ),
-                const SizedBox(height: 24),
-                
-                // Logout & Version
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        // Tindakan Keluar
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.logout, color: Color(0xFFEF4444)),
-                            SizedBox(width: 8),
-                            Text('Keluar', style: TextStyle(color: Color(0xFFEF4444), fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 24),
                 Text('Versi 1.0.0', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500)),
@@ -258,6 +225,11 @@ class _AkunScreenState extends State<AkunScreen> {
             );
           } else if (title == 'Dompet & Saldo') {
             _showAsetBottomSheet(context);
+          } else if (title == 'Notifikasi') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NotificationSettingsScreen()),
+            );
           } else if (title == 'Backup & Ekspor Data') {
             final csvData = Provider.of<TransactionProvider>(context, listen: false).exportToCSV();
             if (csvData.isEmpty) {

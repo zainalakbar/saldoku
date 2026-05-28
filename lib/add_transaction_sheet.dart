@@ -7,6 +7,8 @@ import 'logic/transaction_model.dart';
 import 'logic/transaction_provider.dart';
 import 'logic/financial_provider.dart';
 import 'logic/financial_models.dart';
+import 'logic/notification_provider.dart';
+import 'utils/app_notification.dart';
 
 class AddTransactionSheet extends StatefulWidget {
   const AddTransactionSheet({super.key});
@@ -58,6 +60,32 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
       );
 
       Provider.of<TransactionProvider>(context, listen: false).addTransaction(transaction);
+
+      // Show in-app notification if enabled
+      final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
+      if (notifProvider.transactionNotif) {
+        final isIncome = _type == TransactionType.income;
+        final notifTitle = isIncome ? 'Pemasukan Dicatat' : 'Pengeluaran Dicatat';
+        final notifMsg = '${_titleController.text} — ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(amount)}';
+        final notifIcon = isIncome ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded;
+        final notifColor = isIncome ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+
+        // Popup in-app
+        AppNotification.show(
+          context,
+          message: isIncome ? '✅ Pemasukan berhasil dicatat!' : '✅ Pengeluaran berhasil dicatat!',
+          type: isIncome ? AppNotificationType.success : AppNotificationType.info,
+        );
+
+        // Simpan ke riwayat notifikasi
+        notifProvider.addToHistory(
+          title: notifTitle,
+          message: notifMsg,
+          icon: notifIcon,
+          color: notifColor,
+        );
+      }
+
       
       // Update asset balance if selected
       if (_selectedAsset != null) {

@@ -18,6 +18,8 @@ import '../transaction_detail_screen.dart';
 import '../logic/navigation_provider.dart';
 import 'monthly_report_screen.dart';
 import 'recurring_transactions_screen.dart';
+import 'notification_history_sheet.dart';
+import '../logic/notification_provider.dart';
 
 import '../widgets/dashboard/transaction_history.dart';
 import '../widgets/dashboard/budget_section.dart';
@@ -228,18 +230,53 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             ],
           ),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white.withOpacity(0.12),
-              border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
-            ),
-            child: const Icon(
-              Icons.notifications_none_outlined,
-              color: Colors.white,
-              size: 24,
-            ),
+          Consumer<NotificationProvider>(
+            builder: (context, notifProvider, _) {
+              final unread = notifProvider.unreadCount;
+              return GestureDetector(
+                onTap: () => NotificationHistorySheet.show(context),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white.withOpacity(0.12),
+                        border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_outlined,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    if (unread > 0)
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEF4444),
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                          child: Text(
+                            unread > 9 ? '9+' : '$unread',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),

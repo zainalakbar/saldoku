@@ -7,6 +7,7 @@ import 'logic/financial_provider.dart';
 import 'logic/budget_provider.dart';
 import 'logic/theme_provider.dart';
 import 'logic/navigation_provider.dart';
+import 'logic/notification_provider.dart';
 
 // Screens
 import 'screens/main_screen.dart';
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BudgetProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
