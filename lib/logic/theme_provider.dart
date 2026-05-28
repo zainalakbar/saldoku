@@ -130,69 +130,143 @@ class ThemeProvider with ChangeNotifier {
     }
   }
 
-  // Dark Theme Data
+  // ─── COLOR CONSTANTS ──────────────────────────────────────────
+  static const _bgDark       = Color(0xFF050C1F);   // Near-black navy
+  static const _surfaceDark  = Color(0xFF0D1530);   // Navy card surface
+  static const _elevatedDark = Color(0xFF142040);   // Elevated navy container
+  static const _lime         = Color(0xFF1E90FF);   // Electric blue – primary accent
+  static const _limeSoft     = Color(0xFF0085D1);   // Deep sky blue – secondary
+  static const _onLime       = Color(0xFF050C1F);   // Dark navy text on blue buttons
+  static const _bgLight      = Color(0xFFF0F4FF);   // Light scaffold (ice white-blue)
+  static const _onSurfaceL   = Color(0xFF0D1C44);   // Text on light surface
+
+  // ─── DARK THEME ───────────────────────────────────────────────
   ThemeData get darkTheme => ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    primaryColor: const Color(0xFF1E60FE),
-    scaffoldBackgroundColor: const Color(0xFF0F111A), // Deeper dark
+    primaryColor: _lime,
+    scaffoldBackgroundColor: _bgDark,
     colorScheme: const ColorScheme.dark(
-      primary: Color(0xFF1E60FE),
-      secondary: Color(0xFF00D2FF), // Neon cyan for accents
-      surface: Color(0xFF1A1C29),
+      primary: _lime,
+      onPrimary: _onLime,
+      secondary: _limeSoft,
+      onSecondary: _onLime,
+      surface: _surfaceDark,
       onSurface: Colors.white,
-      surfaceContainerHighest: Color(0xFF25283D),
+      surfaceContainerHighest: _elevatedDark,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF0F111A),
+      backgroundColor: _bgDark,
       elevation: 0,
       centerTitle: true,
+      iconTheme: IconThemeData(color: Colors.white),
       titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
     ),
     cardTheme: CardThemeData(
-      color: const Color(0xFF1A1C29),
+      color: _surfaceDark,
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _lime,
+        foregroundColor: _onLime,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: _elevatedDark,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: _lime, width: 1.5),
+      ),
+      labelStyle: const TextStyle(color: Colors.white54),
     ),
     textTheme: const TextTheme(
-      headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -1),
-      headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5),
-      titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-      bodyLarge: TextStyle(fontSize: 16, color: Colors.white70),
-      bodyMedium: TextStyle(fontSize: 14, color: Colors.white60),
+      headlineLarge:  TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white,  letterSpacing: -1),
+      headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white,  letterSpacing: -0.5),
+      titleLarge:     TextStyle(fontSize: 18, fontWeight: FontWeight.bold,  color: Colors.white),
+      bodyLarge:      TextStyle(fontSize: 16,                               color: Colors.white70),
+      bodyMedium:     TextStyle(fontSize: 14,                               color: Colors.white54),
+    ),
+    dividerColor: Colors.white12,
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((s) =>
+          s.contains(WidgetState.selected) ? _onLime : Colors.white54),
+      trackColor: WidgetStateProperty.resolveWith((s) =>
+          s.contains(WidgetState.selected) ? _lime : Colors.white24),
     ),
   );
 
-  // Light Theme Data
+  // ─── LIGHT THEME ──────────────────────────────────────────────
   ThemeData get lightTheme => ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
     primaryColor: const Color(0xFF1E60FE),
-    scaffoldBackgroundColor: const Color(0xFFF4F7FF), // Soft premium blue-white
+    scaffoldBackgroundColor: const Color(0xFFF5F7FB), // Soft blue-grey
     colorScheme: const ColorScheme.light(
       primary: Color(0xFF1E60FE),
-      secondary: Color(0xFF1E60FE),
+      onPrimary: Colors.white,
+      secondary: Color(0xFF0085D1),
+      onSecondary: Colors.white,
       surface: Colors.white,
-      onSurface: Color(0xFF0D1C44),
-      surfaceContainerHighest: Color(0xFFF0F4FF),
+      onSurface: Color(0xFF1A2536),
+      surfaceContainerHighest: Color(0xFFEFF3FB),
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFFF4F7FF),
+      backgroundColor: Color(0xFFF5F7FB),
       elevation: 0,
       centerTitle: true,
-      titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44)),
+      iconTheme: IconThemeData(color: Color(0xFF1A2536)),
+      titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A2536)),
     ),
     cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shadowColor: Color(0x141E60FE),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF1E60FE),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        elevation: 0,
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFFF0F4FF),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF1E60FE), width: 1.5),
+      ),
+      labelStyle: const TextStyle(color: Color(0xFF1A2536)),
     ),
     textTheme: const TextTheme(
-      headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF0D1C44), letterSpacing: -1),
-      headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF0D1C44), letterSpacing: -0.5),
-      titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44)),
-      bodyLarge: TextStyle(fontSize: 16, color: Color(0xFF4A4A4A)),
-      bodyMedium: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+      headlineLarge:  TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF1A2536), letterSpacing: -1),
+      headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1A2536), letterSpacing: -0.5),
+      titleLarge:     TextStyle(fontSize: 18, fontWeight: FontWeight.bold,  color: Color(0xFF1A2536)),
+      bodyLarge:      TextStyle(fontSize: 16,                               color: Color(0xFF3D5A80)),
+      bodyMedium:     TextStyle(fontSize: 14,                               color: Color(0xFF6B7C9D)),
+    ),
+    dividerColor: const Color(0xFFE2E8F4),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((s) =>
+          s.contains(WidgetState.selected) ? Colors.white : const Color(0xFF9BACC8)),
+      trackColor: WidgetStateProperty.resolveWith((s) =>
+          s.contains(WidgetState.selected) ? const Color(0xFF1E60FE) : const Color(0xFFCDD6E8)),
     ),
   );
 }

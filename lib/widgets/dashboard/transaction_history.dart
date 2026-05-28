@@ -60,11 +60,13 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
           child: Container(
             height: 48,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.15)),
             ),
             child: TextField(
               controller: _searchController,
+              style: const TextStyle(color: Colors.white),
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value.toLowerCase();
@@ -72,8 +74,8 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
               },
               decoration: InputDecoration(
                 hintText: 'Cari transaksi...',
-                hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20),
+                hintStyle: const TextStyle(color: Colors.white30, fontSize: 14),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF1E90FF), size: 20),
                 suffixIcon: _searchQuery.isNotEmpty 
                   ? IconButton(
                       icon: const Icon(Icons.clear, size: 18),
@@ -96,8 +98,9 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
           width: 220,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.15)),
           ),
           child: Row(
             children: [
@@ -108,18 +111,15 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: _isAsetTab ? BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
+                      color: const Color(0xFF1E60FE),
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        )
-                      ],
                     ) : null,
                     alignment: Alignment.center,
-                    child: Text('Transaksi', style: TextStyle(fontWeight: _isAsetTab ? FontWeight.w600 : FontWeight.w500, color: _isAsetTab ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 14)),
+                    child: Text('Transaksi', style: TextStyle(
+                      fontWeight: _isAsetTab ? FontWeight.w700 : FontWeight.w500,
+                      color: _isAsetTab ? const Color(0xFF050C1F) : Colors.grey.shade400,
+                      fontSize: 14,
+                    )),
                   ),
                 ),
               ),
@@ -130,18 +130,15 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: !_isAsetTab ? BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
+                      color: const Color(0xFF1E60FE),
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        )
-                      ],
                     ) : null,
                     alignment: Alignment.center,
-                    child: Text('Hutang', style: TextStyle(fontWeight: !_isAsetTab ? FontWeight.w600 : FontWeight.w500, color: !_isAsetTab ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 14)),
+                    child: Text('Hutang', style: TextStyle(
+                      fontWeight: !_isAsetTab ? FontWeight.w700 : FontWeight.w500,
+                      color: !_isAsetTab ? const Color(0xFF050C1F) : Colors.grey.shade400,
+                      fontSize: 14,
+                    )),
                   ),
                 ),
               ),
@@ -290,10 +287,10 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF1E60FE).withOpacity(0.1),
+                                      color: const Color(0xFF1E60FE).withOpacity(0.15),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: const Icon(Icons.image_outlined, size: 10, color: Color(0xFF1E60FE)),
+                                    child: const Icon(Icons.image_outlined, size: 10, color: Color(0xFF1E90FF)),
                                   ),
                                 ],
                               ],
@@ -357,21 +354,22 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.08)),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 4))],
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: isToMe ? Colors.blue.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                        color: isToMe ? const Color(0xFF1E60FE).withOpacity(0.12) : Colors.orange.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         isToMe ? Icons.arrow_downward : Icons.arrow_upward, 
-                        color: isToMe ? Colors.blue : Colors.orange, 
+                        color: isToMe ? const Color(0xFF1E90FF) : Colors.orange, 
                         size: 20
                       ),
                     ),
@@ -392,7 +390,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                           currencyFormatter.format(d.amount),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: d.isPaid ? Colors.grey : (isToMe ? Colors.blue : Colors.orange),
+                            color: d.isPaid ? Colors.grey.shade400 : (isToMe ? const Color(0xFF1E90FF) : Colors.orange),
                             fontSize: 14,
                             decoration: d.isPaid ? TextDecoration.lineThrough : null,
                           ),
@@ -439,7 +437,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E60FE),
-              foregroundColor: Colors.white,
+              foregroundColor: const Color(0xFF050C1F),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 0,
@@ -454,14 +452,15 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 5))],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.12)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 16, offset: const Offset(0, 5))],
         ),
         child: isDashed 
           ? CustomPaint(
               painter: DashedRectPainter(
-                color: Colors.grey.shade400,
+                color: const Color(0xFF1E60FE).withOpacity(0.3),
                 strokeWidth: 1.2,
                 gap: 6.0,
                 borderRadius: 16.0,

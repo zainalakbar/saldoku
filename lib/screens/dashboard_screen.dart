@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -21,227 +22,226 @@ import 'recurring_transactions_screen.dart';
 import '../widgets/dashboard/transaction_history.dart';
 import '../widgets/dashboard/budget_section.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> with TickerProviderStateMixin {
+  late AnimationController _entryController;
+  late Animation<double> _balanceFadeSlide;
+  late Animation<double> _insightsFadeSlide;
+
+  @override
+  void initState() {
+    super.initState();
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+
+    _balanceFadeSlide = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+    );
+
+    _insightsFadeSlide = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.2, 0.7, curve: Curves.easeOut),
+    );
+
+    _entryController.forward();
+  }
+
+  @override
+  void dispose() {
+    _entryController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FB),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 100),
+        child: Stack(
+          children: [
+            // Background top-right swoosh/wave
+            const Positioned(
+              top: 0,
+              right: 0,
+              left: 0,
+              child: TopRightSwoosh(),
+            ),
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  _buildProfileRow(context),
+                  const SizedBox(height: 16),
+                  
+                  // 2. Kartu Saldo Utama (Animated Entry)
+                  _buildAnimatedBalanceCard(),
+                  const SizedBox(height: 24),
+                  
+                  // 3. Kartu Smart Insights (Animated Entry)
+                  _buildAnimatedSmartInsights(),
+                  const SizedBox(height: 24),
+                  
+                  // 4. Fitur Andalan
+                  _buildFeatures(context),
+                  const SizedBox(height: 24),
+                  
+                  // 5. Fitgikasan (Ringkasan)
+                  _buildMonthlySummary(context),
+                  const SizedBox(height: 24),
+                  
+                  const BudgetSection(),
+                  const SizedBox(height: 24),
+                  _buildTransactionHistory(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Custom Status Bar Row matching prompt specs
+  Widget _buildStatusBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      child: Row(
         children: [
-          // Dark blue hero header
-          _buildHeroHeader(context),
-          const SizedBox(height: 24),
-          _buildSmartInsights(context),
-          const SizedBox(height: 24),
-          _buildFeatures(context),
-          const SizedBox(height: 24),
-          _buildMonthlySummary(context),
-          const SizedBox(height: 24),
-          const BudgetSection(),
-          const SizedBox(height: 24),
-          _buildTransactionHistory(),
+          const Text(
+            '2.53',
+            style: TextStyle(
+              color: Color(0xFF1A2536),
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Icon(Icons.chat_bubble_outline, size: 12, color: Color(0xFF1A2536)),
+          const Spacer(),
+          const Icon(Icons.signal_cellular_alt_rounded, size: 16, color: Color(0xFF1A2536)),
+          const SizedBox(width: 4),
+          const Icon(Icons.wifi, size: 16, color: Color(0xFF1A2536)),
+          const SizedBox(width: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A2536).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              children: const [
+                Text(
+                  '84',
+                  style: TextStyle(
+                    color: Color(0xFF1A2536),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                ),
+                SizedBox(width: 2),
+                Icon(Icons.bolt, size: 10, color: Color(0xFF1A2536)),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // ─── HERO HEADER (dark banking style) ───────────────────────────────────
-  Widget _buildHeroHeader(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final provider = Provider.of<TransactionProvider>(context);
-    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
-    final isPrivacy = themeProvider.isPrivacyMode;
+  // Profile row with sun icon and notification bell + red badge
+  Widget _buildProfileRow(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final userName = themeProvider.userName;
     final initial = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
 
     final hour = DateTime.now().hour;
     String greeting;
-    if (hour >= 5 && hour < 11) greeting = 'Selamat Pagi ☀️';
-    else if (hour >= 11 && hour < 15) greeting = 'Selamat Siang ☀️';
-    else if (hour >= 15 && hour < 18) greeting = 'Selamat Sore 🌤️';
-    else greeting = 'Selamat Malam 🌙';
+    if (hour >= 5 && hour < 11) greeting = 'Selamat Pagi';
+    else if (hour >= 11 && hour < 15) greeting = 'Selamat Siang';
+    else if (hour >= 15 && hour < 18) greeting = 'Selamat Sore';
+    else greeting = 'Selamat Malam';
 
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0A1628), Color(0xFF0D2248), Color(0xFF0A1A3A)],
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-          child: Column(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 22,
+              backgroundColor: const Color(0xFF1E60FE),
+              backgroundImage: themeProvider.profileImagePath != null
+                  ? FileImage(File(themeProvider.profileImagePath!))
+                  : null,
+              child: themeProvider.profileImagePath == null
+                  ? Text(initial, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top row: Avatar + name + bell
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: const Color(0xFF1E60FE),
-                    backgroundImage: themeProvider.profileImagePath != null
-                        ? FileImage(File(themeProvider.profileImagePath!))
-                        : null,
-                    child: themeProvider.profileImagePath == null
-                        ? Text(initial, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))
-                        : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(greeting, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                      Text(userName, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(14),
+                  Text(
+                    greeting,
+                    style: TextStyle(
+                      color: const Color(0xFF1A2536).withOpacity(0.6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
-                    child: const Icon(Icons.notifications_none_outlined, color: Colors.white70, size: 22),
                   ),
+                  const SizedBox(width: 4),
+                  const Text('☀️', style: TextStyle(fontSize: 12)),
                 ],
               ),
-              const SizedBox(height: 28),
-
-              // Total balance label
-              const Text('Total Saldo', style: TextStyle(color: Colors.white54, fontSize: 14, letterSpacing: 0.3)),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Text(
-                      isPrivacy ? 'Rp ••••••' : currencyFormatter.format(provider.currentBalance),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 36,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => themeProvider.setPrivacyMode(!isPrivacy),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: Icon(
-                        isPrivacy ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        key: ValueKey(isPrivacy),
-                        color: isPrivacy ? const Color(0xFF4F9EFF) : Colors.white38,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Pemasukan & Pengeluaran pills
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(context, MaterialPageRoute(
-                        builder: (context) => const TransactionDetailScreen(type: TransactionType.income, title: 'Riwayat Pemasukan'),
-                      )),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.07),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00C853).withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.arrow_downward_rounded, color: Color(0xFF00C853), size: 16),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Pemasukan', style: TextStyle(color: Colors.white54, fontSize: 11)),
-                                  Text(
-                                    isPrivacy ? 'Rp ••••' : currencyFormatter.format(provider.totalIncome),
-                                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(context, MaterialPageRoute(
-                        builder: (context) => const TransactionDetailScreen(type: TransactionType.expense, title: 'Riwayat Pengeluaran'),
-                      )),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.07),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFF5252).withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.arrow_upward_rounded, color: Color(0xFFFF5252), size: 16),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Pengeluaran', style: TextStyle(color: Colors.white54, fontSize: 11)),
-                                  Text(
-                                    isPrivacy ? 'Rp ••••' : currencyFormatter.format(provider.totalExpense),
-                                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              Text(
+                userName.isNotEmpty ? userName : 'Akbar Gg',
+                style: const TextStyle(
+                  color: Color(0xFF1A2536),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
-        ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: Colors.white.withOpacity(0.12),
+              border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
+            ),
+            child: const Icon(
+              Icons.notifications_none_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -291,6 +291,256 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  // Animated transition wrapper for balance card
+  Widget _buildAnimatedBalanceCard() {
+    final slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 0.2),
+      end: Offset.zero,
+    ).animate(_balanceFadeSlide);
+
+    return FadeTransition(
+      opacity: _balanceFadeSlide,
+      child: SlideTransition(
+        position: slideAnimation,
+        child: _buildMainBalanceCard(context),
+      ),
+    );
+  }
+
+  // Main balance card with custom gradient
+  Widget _buildMainBalanceCard(BuildContext context) {
+    final provider = Provider.of<TransactionProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isPrivacy = themeProvider.isPrivacyMode;
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+
+    String maskAmount(String amount) => isPrivacy ? 'Rp ••••••' : amount;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1E60FE), Color(0xFF4B84FA)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1E60FE).withOpacity(0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Waves
+            Positioned(
+              left: -50,
+              bottom: -50,
+              child: Container(
+                width: 260,
+                height: 260,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withOpacity(0.06), width: 25),
+                ),
+              ),
+            ),
+            Positioned(
+              left: -90,
+              bottom: -90,
+              child: Container(
+                width: 320,
+                height: 320,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withOpacity(0.04), width: 35),
+                ),
+              ),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total Saldo',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Text(
+                                maskAmount(currencyFormatter.format(provider.currentBalance)),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => themeProvider.setPrivacyMode(!isPrivacy),
+                                child: Icon(
+                                  isPrivacy ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                  size: 20,
+                                  color: Colors.white.withOpacity(0.85),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSubCard(
+                          context: context,
+                          icon: Icons.arrow_upward,
+                          title: 'Pemasukan',
+                          amount: maskAmount(currencyFormatter.format(provider.totalIncome)),
+                          color: const Color(0xFF10B981),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MonthlyReportScreen(),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSubCard(
+                          context: context,
+                          icon: Icons.arrow_downward,
+                          title: 'Pengeluaran',
+                          amount: maskAmount(currencyFormatter.format(provider.totalExpense)),
+                          color: const Color(0xFFEF4444),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MonthlyReportScreen(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Frosted glass sub-card
+  Widget _buildSubCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String amount,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: color, size: 16),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          amount,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Animated transition wrapper for Smart Insights
+  Widget _buildAnimatedSmartInsights() {
+    final slideAnimation = Tween<Offset>(
+      begin: const Offset(0.2, 0.0),
+      end: Offset.zero,
+    ).animate(_insightsFadeSlide);
+
+    return FadeTransition(
+      opacity: _insightsFadeSlide,
+      child: SlideTransition(
+        position: slideAnimation,
+        child: _buildSmartInsightsCard(context),
+      ),
+    );
+  }
+
   // Kept for backward compat (no longer called but methods must still exist)
   Widget _buildHeader(BuildContext context) => const SizedBox.shrink();
   Widget _buildBalanceCards(BuildContext context) => const SizedBox.shrink();
@@ -304,16 +554,20 @@ class DashboardScreen extends StatelessWidget {
     final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+          colors: [Color(0xFF051228), Color(0xFF0047BB), Color(0xFF1E90FF)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF4A00E0).withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 8))
+          BoxShadow(
+            color: const Color(0xFF1E90FF).withOpacity(0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: Column(
@@ -322,19 +576,26 @@ class DashboardScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Target Tabungan', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
-              Text('${(progress * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              const Text('Target Tabungan', style: TextStyle(color: Color(0xFF050C1F), fontSize: 12, fontWeight: FontWeight.w600)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF050C1F).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('${(progress * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Color(0xFF050C1F), fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          Text(goal.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+          Text(goal.name, style: const TextStyle(color: Color(0xFF050C1F), fontSize: 20, fontWeight: FontWeight.w900)),
           const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: progress.clamp(0.0, 1.0),
-              backgroundColor: Colors.white.withOpacity(0.15),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              backgroundColor: const Color(0xFF050C1F).withOpacity(0.15),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF050C1F)),
               minHeight: 8,
             ),
           ),
@@ -342,8 +603,8 @@ class DashboardScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(currencyFormatter.format(goal.currentAmount), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-              Text('Goal: ${currencyFormatter.format(goal.targetAmount)}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              Text(currencyFormatter.format(goal.currentAmount), style: const TextStyle(color: Color(0xFF050C1F), fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('Goal: ${currencyFormatter.format(goal.targetAmount)}', style: TextStyle(color: const Color(0xFF050C1F).withOpacity(0.6), fontSize: 11)),
             ],
           ),
         ],
@@ -815,15 +1076,14 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSmartInsights(BuildContext context) {
+  Widget _buildSmartInsightsCard(BuildContext context) {
     final budgetProvider = Provider.of<BudgetProvider>(context);
     final financialProvider = Provider.of<FinancialProvider>(context);
     final transProvider = Provider.of<TransactionProvider>(context);
     
     String message = "Keuanganmu hari ini terlihat stabil gess. Tetap konsisten ya!";
     IconData icon = Icons.auto_awesome;
-    Color color1 = const Color(0xFF1E60FE);
-    Color color2 = const Color(0xFF00D2FF);
+    Color color1 = const Color(0xFF1E60FE); 
 
     bool hasOverBudget = false;
     bool hasWarningBudget = false;
@@ -848,92 +1108,104 @@ class DashboardScreen extends StatelessWidget {
     if (hasOverBudget) {
       message = "Waduh! Pengeluaran $categoryName kamu sudah jebol budget. Rem dulu gess! 🛑";
       icon = Icons.warning_amber_rounded;
-      color1 = const Color(0xFFFF5252); color2 = const Color(0xFFFF8A80);
+      color1 = const Color(0xFFFF5252);
     } else if (expense > income && income > 0) {
       message = "Waduh gess, pengeluaranmu lebih besar dari pemasukan! Atur strategi ya. 💸";
       icon = Icons.trending_down;
-      color1 = const Color(0xFFFF5252); color2 = const Color(0xFFFF8A80);
+      color1 = const Color(0xFFFF5252);
     } else if (hasWarningBudget) {
       message = "Waspada gess, pengeluaran $categoryName sudah mau habis limitnya. Hati-hati! ⚠️";
       icon = Icons.info_outline;
-      color1 = Colors.orange; color2 = Colors.amber;
+      color1 = Colors.orange;
     } else if (financialProvider.goals.isNotEmpty && (financialProvider.goals.first.currentAmount / financialProvider.goals.first.targetAmount) >= 0.9) {
       message = "Dikit lagi! Tabungan '${financialProvider.goals.first.name}' kamu hampir finish. Semangat! 🎉";
       icon = Icons.emoji_events;
-      color1 = Colors.amber; color2 = Colors.orange;
+      color1 = Colors.amber;
     }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
-        padding: const EdgeInsets.all(2),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [color1, color2]),
-          borderRadius: BorderRadius.circular(24),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: const Color(0xFFEBF0FA), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [color1.withOpacity(0.2), color2.withOpacity(0.2)]),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color1, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SMART INSIGHTS',
-                      style: TextStyle(color: color1, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: color1,
+              size: 28,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'SMART INSIGHTS',
+                    style: TextStyle(
+                      color: Color(0xFF5A75A4),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      message,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600, height: 1.3),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      color: Color(0xFF0D1C44),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildFeatures(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Fitur Andalan',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1A2536),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Row 1: Kalkulator, Split Bill, Hutang
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Fitur Andalan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 16,
-            alignment: WrapAlignment.start,
-            children: [
               _buildFeatureIcon(
-                context, Icons.calculate, 'Kalkulator', const Color(0xFF1E60FE), Colors.blue.shade50,
+                index: 0,
+                context: context,
+                icon: Icons.calculate_outlined,
+                label: 'Kalkulator',
+                color: const Color(0xFF1E60FE),
+                bgColor: const Color(0xFFE8F0FF),
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
@@ -944,7 +1216,12 @@ class DashboardScreen extends StatelessWidget {
                 },
               ),
               _buildFeatureIcon(
-                context, Icons.receipt_long, 'Split Bill', const Color(0xFF607D8B), Colors.blueGrey.shade50,
+                index: 1,
+                context: context,
+                icon: Icons.receipt_long_outlined,
+                label: 'Split Bill',
+                color: const Color(0xFF607D8B),
+                bgColor: const Color(0xFFECEFF1),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -953,7 +1230,12 @@ class DashboardScreen extends StatelessWidget {
                 },
               ),
               _buildFeatureIcon(
-                context, Icons.account_balance_outlined, 'Hutang', const Color(0xFFF59E0B), Colors.orange.shade50,
+                index: 2,
+                context: context,
+                icon: Icons.account_balance_outlined,
+                label: 'Hutang',
+                color: const Color(0xFFF59E0B),
+                bgColor: const Color(0xFFFFF3E0),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -961,16 +1243,38 @@ class DashboardScreen extends StatelessWidget {
                   );
                 },
               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Row 2: Tabungan, Budgeting, Laporan
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               _buildFeatureIcon(
-                context, Icons.savings_outlined, 'Tabungan', const Color(0xFFE91E63), Colors.pink.shade50,
+                index: 3,
+                context: context,
+                icon: Icons.savings_outlined,
+                label: 'Tabungan',
+                color: const Color(0xFFE91E63),
+                bgColor: const Color(0xFFFCE4EC),
                 onTap: () => _showTabunganBottomSheet(context),
               ),
               _buildFeatureIcon(
-                context, Icons.pie_chart, 'Budgeting', const Color(0xFFFF9800), Colors.orange.shade50,
+                index: 4,
+                context: context,
+                icon: Icons.pie_chart_outline,
+                label: 'Budgeting',
+                color: const Color(0xFFFF9800),
+                bgColor: const Color(0xFFFFF3E0),
                 onTap: () => _showBudgetBottomSheet(context),
               ),
               _buildFeatureIcon(
-                context, Icons.bar_chart_rounded, 'Laporan', const Color(0xFF10B981), Colors.green.shade50,
+                index: 5,
+                context: context,
+                icon: Icons.bar_chart_rounded,
+                label: 'Laporan',
+                color: const Color(0xFF10B981),
+                bgColor: const Color(0xFFE0F2F1),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -980,42 +1284,47 @@ class DashboardScreen extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildFeatureIcon(BuildContext context, IconData icon, String label, Color color, Color bgColor, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 76,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        child: Column(
-          children: [
-            Container(
-              height: 58,
-              width: 58,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.10),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: color.withOpacity(0.22), width: 1.5),
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
-                fontWeight: FontWeight.w600,
-                height: 1.2,
-              ),
-            ),
-          ],
-        ),
+  Widget _buildFeatureIcon({
+    required int index,
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    final double start = 0.4 + (index * 0.05);
+    final double end = (start + 0.3).clamp(0.0, 1.0);
+    
+    final Animation<double> scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entryController,
+        curve: Interval(start, end, curve: Curves.elasticOut),
+      ),
+    );
+
+    return AnimatedBuilder(
+      animation: _entryController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: scaleAnimation.value,
+          child: Opacity(
+            opacity: scaleAnimation.value.clamp(0.0, 1.0),
+            child: child,
+          ),
+        );
+      },
+      child: _FeatureIconWidget(
+        icon: icon,
+        label: label,
+        color: color,
+        bgColor: bgColor,
+        onTap: onTap,
       ),
     );
   }
@@ -1031,7 +1340,7 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Ringkasan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+          const Text('Fitgikasan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1A2536))),
           const SizedBox(height: 12),
           _buildSummaryItem(
             context: context,
@@ -1094,39 +1403,41 @@ class DashboardScreen extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.08), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 10,
+              color: const Color(0xFF1E60FE).withOpacity(0.06),
+              blurRadius: 16,
               offset: const Offset(0, 4),
             )
           ],
-          border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05)),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(9),
               decoration: BoxDecoration(
-                color: iconBgColor,
+                color: iconColor.withOpacity(0.10),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
-              child: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.w500)),
+              child: Text(title,
+                style: const TextStyle(color: Color(0xFF6B7C9D), fontSize: 13, fontWeight: FontWeight.w500)),
             ),
-          Text(amount, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(width: 12),
-          Icon(Icons.keyboard_arrow_down, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2), size: 20),
-        ],
+            Text(amount,
+              style: const TextStyle(color: Color(0xFF1A2536), fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(width: 8),
+            const Icon(Icons.arrow_forward_ios, color: Color(0xFFCDD6E8), size: 14),
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -1135,4 +1446,158 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildTransactionHistory() {
     return const TransactionHistorySection();
   }
+}
+
+class _FeatureIconWidget extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final Color bgColor;
+  final VoidCallback onTap;
+
+  const _FeatureIconWidget({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.bgColor,
+    required this.onTap,
+  });
+
+  @override
+  State<_FeatureIconWidget> createState() => _FeatureIconWidgetState();
+}
+
+class _FeatureIconWidgetState extends State<_FeatureIconWidget> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.92),
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeInOut,
+        child: SizedBox(
+          width: 96,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  // Colored radial gradient glow background
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          widget.color.withOpacity(0.35),
+                          widget.color.withOpacity(0.18),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.55, 1.0],
+                      ),
+                    ),
+                  ),
+                  // White glassmorphic circular button on top
+                  Container(
+                    height: 56,
+                    width: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.85),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.9),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: widget.color.withOpacity(0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        widget.icon,
+                        color: widget.color,
+                        size: 26,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                widget.label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF1A2536),
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TopRightSwoosh extends StatelessWidget {
+  const TopRightSwoosh({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return ClipPath(
+      clipper: TopRightSwooshClipper(),
+      child: Container(
+        width: size.width,
+        height: 280,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF0C3DBC),
+              Color(0xFF1E60FE),
+            ],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TopRightSwooshClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(size.width * 0.4, 0);
+    path.quadraticBezierTo(
+      size.width * 0.65,
+      size.height * 0.45,
+      size.width,
+      size.height * 0.35,
+    );
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
