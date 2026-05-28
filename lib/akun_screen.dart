@@ -12,6 +12,7 @@ import 'screens/recurring_transactions_screen.dart';
 import 'screens/keamanan_screen.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/notification_settings_screen.dart';
+import 'screens/help_center_screen.dart';
 
 class AkunScreen extends StatefulWidget {
   const AkunScreen({super.key});
@@ -64,7 +65,6 @@ class _AkunScreenState extends State<AkunScreen> {
                     _buildThemeToggle(context, themeProvider),
                     _buildMenuItem(context, Icons.autorenew, 'Transaksi Rutin', const Color(0xFF10B981)),
                     _buildMenuItem(context, Icons.notifications_none, 'Notifikasi', const Color(0xFFF59E0B)),
-                    _buildMenuItem(context, Icons.language, 'Bahasa', const Color(0xFF10B981)),
                   ],
                 ),
             const SizedBox(height: 24),
@@ -229,6 +229,11 @@ class _AkunScreenState extends State<AkunScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const NotificationSettingsScreen()),
+            );
+          } else if (title == 'Pusat Bantuan') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HelpCenterScreen()),
             );
           } else if (title == 'Backup & Ekspor Data') {
             final csvData = Provider.of<TransactionProvider>(context, listen: false).exportToCSV();
