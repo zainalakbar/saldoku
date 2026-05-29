@@ -66,7 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 100),
         child: Stack(
@@ -210,7 +210,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   Text(
                     greeting,
                     style: TextStyle(
-                      color: const Color(0xFF1A2536).withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -221,8 +221,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
               ),
               Text(
                 userName.isNotEmpty ? userName : 'Akbar Gg',
-                style: const TextStyle(
-                  color: Color(0xFF1A2536),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1165,12 +1165,12 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0xFFEBF0FA), width: 1.5),
+          border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.45), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: const Color(0xFF1E60FE).withOpacity(0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -1192,7 +1192,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   const Text(
                     'SMART INSIGHTS',
                     style: TextStyle(
-                      color: Color(0xFF5A75A4),
+                      color: Color(0xFF1E60FE),
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.2,
@@ -1201,8 +1201,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   const SizedBox(height: 4),
                   Text(
                     message,
-                    style: const TextStyle(
-                      color: Color(0xFF0D1C44),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       height: 1.3,
@@ -1223,12 +1223,12 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Fitur Andalan',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1A2536),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
@@ -1377,7 +1377,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Fitgikasan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1A2536))),
+          Text('Ringkasan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 12),
           _buildSummaryItem(
             context: context,
@@ -1442,15 +1442,20 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.08), width: 1),
+          border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.45), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1E60FE).withOpacity(0.06),
-              blurRadius: 16,
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
               offset: const Offset(0, 4),
-            )
+            ),
+            BoxShadow(
+              color: const Color(0xFF1E60FE).withOpacity(0.15),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
         child: Row(
@@ -1466,10 +1471,10 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             const SizedBox(width: 14),
             Expanded(
               child: Text(title,
-                style: const TextStyle(color: Color(0xFF6B7C9D), fontSize: 13, fontWeight: FontWeight.w500)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55), fontSize: 13, fontWeight: FontWeight.w500)),
             ),
             Text(amount,
-              style: const TextStyle(color: Color(0xFF1A2536), fontWeight: FontWeight.bold, fontSize: 15)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(width: 8),
             const Icon(Icons.arrow_forward_ios, color: Color(0xFFCDD6E8), size: 14),
           ],
@@ -1551,9 +1556,9 @@ class _FeatureIconWidgetState extends State<_FeatureIconWidget> {
                     width: 56,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.85),
+                      color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Theme.of(context).colorScheme.surface,
                         width: 1.5,
                       ),
                       boxShadow: [
@@ -1578,9 +1583,9 @@ class _FeatureIconWidgetState extends State<_FeatureIconWidget> {
               Text(
                 widget.label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF1A2536),
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
                   height: 1.2,
                 ),

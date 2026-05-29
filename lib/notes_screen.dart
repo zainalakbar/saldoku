@@ -86,21 +86,29 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Widget _buildNoteCard(BuildContext context, Transaction note, NumberFormat formatter) {
+    final imageFile = note.imagePath != null ? File(note.imagePath!) : null;
+    final hasImage = imageFile != null && imageFile.existsSync();
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          )
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: const Color(0xFF1E60FE).withOpacity(0.15),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -108,89 +116,114 @@ class _NotesScreenState extends State<NotesScreen> {
               context, 
               MaterialPageRoute(builder: (context) => TransactionViewScreen(transaction: note))
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: note.category.color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(note.category.icon, color: note.category.color),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: note.category.color.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: note.category.color.withOpacity(0.2), width: 1),
+                    ),
+                    child: Icon(note.category.icon, color: note.category.color, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    note.title,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            Flexible(
+                              child: Text(
+                                note.title,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (hasImage) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E60FE).withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                                if (note.imagePath != null) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Row(
-                                      children: [
-                                        Icon(Icons.receipt_long_outlined, size: 10, color: Colors.blue),
-                                        SizedBox(width: 2),
-                                        Text('STRUK', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.blue)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              DateFormat('dd MMM yyyy, HH:mm').format(note.date),
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                            ),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.receipt_long_outlined, size: 10, color: Color(0xFF1E60FE)),
+                                    SizedBox(width: 2),
+                                    Text('STRUK', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF1E60FE))),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                        const SizedBox(height: 6),
+                        Text(
+                          DateFormat('dd MMM yyyy, HH:mm').format(note.date),
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
+                          if (hasImage) ...[
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.3), width: 1.5),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(6.5),
+                                child: Image.file(
+                                  imageFile,
+                                  width: 36,
+                                  height: 36,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                          ],
                           Text(
                             formatter.format(note.amount),
                             style: const TextStyle(
-                              fontSize: 16, 
-                              fontWeight: FontWeight.bold, 
+                              fontSize: 15, 
+                              fontWeight: FontWeight.w800, 
                               color: Color(0xFFFF5252)
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () => _showDeleteNoteDialog(context, note),
-                          ),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () => _showDeleteNoteDialog(context, note),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red),
+                        ),
                       ),
                     ],
                   ),
-                )
-              ],
+                ],
+              ),
             ),
           ),
         ),

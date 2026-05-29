@@ -13,6 +13,8 @@ import 'screens/keamanan_screen.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/notification_settings_screen.dart';
 import 'screens/help_center_screen.dart';
+import 'screens/terms_screen.dart';
+import 'utils/app_notification.dart';
 
 class AkunScreen extends StatefulWidget {
   const AkunScreen({super.key});
@@ -56,13 +58,13 @@ class _AkunScreenState extends State<AkunScreen> {
                 ),
                 const SizedBox(height: 24),
                 
-                // Grup 1: Pengaturan Keamanan
                 _buildMenuGroup(
                   context: context,
                   title: 'Keamanan & Pengaturan',
                   items: [
                     _buildMenuItem(context, Icons.lock_outline, 'Keamanan & Privasi', const Color(0xFF1E60FE)),
                     _buildThemeToggle(context, themeProvider),
+                    _buildPrivacyToggle(context, themeProvider),
                     _buildMenuItem(context, Icons.autorenew, 'Transaksi Rutin', const Color(0xFF10B981)),
                     _buildMenuItem(context, Icons.notifications_none, 'Notifikasi', const Color(0xFFF59E0B)),
                   ],
@@ -235,6 +237,11 @@ class _AkunScreenState extends State<AkunScreen> {
               context,
               MaterialPageRoute(builder: (context) => const HelpCenterScreen()),
             );
+          } else if (title == 'Syarat & Ketentuan') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TermsScreen()),
+            );
           } else if (title == 'Backup & Ekspor Data') {
             final csvData = Provider.of<TransactionProvider>(context, listen: false).exportToCSV();
             if (csvData.isEmpty) {
@@ -330,7 +337,57 @@ class _AkunScreenState extends State<AkunScreen> {
           Switch(
             value: themeProvider.themeMode == ThemeMode.dark,
             onChanged: (value) => themeProvider.toggleTheme(value),
-            activeColor: const Color(0xFF1E60FE),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrivacyToggle(BuildContext context, ThemeProvider themeProvider) {
+    final iconColor = const Color(0xFF8B5CF6);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              themeProvider.isPrivacyMode ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              color: iconColor,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mode Privasi',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                ),
+                Text(
+                  'Sembunyikan nominal saldo di beranda',
+                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: themeProvider.isPrivacyMode,
+            onChanged: (value) {
+              themeProvider.setPrivacyMode(value);
+              AppNotification.show(
+                context,
+                message: value ? 'Mode Privasi aktif – Saldo tersembunyi' : 'Mode Privasi dinonaktifkan',
+                type: value ? AppNotificationType.info : AppNotificationType.warning,
+                icon: value ? Icons.visibility_off : Icons.visibility,
+              );
+            },
           ),
         ],
       ),

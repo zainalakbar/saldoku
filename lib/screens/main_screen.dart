@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dashboard_screen.dart';
 import '../notes_screen.dart';
 import '../statistik_screen.dart';
@@ -28,22 +29,115 @@ class _MainScreenState extends State<MainScreen> {
     Provider.of<NavigationProvider>(context, listen: false).setIndex(index);
   }
 
+  Future<bool> _showExitConfirmationDialog(BuildContext context) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.power_settings_new_rounded,
+                color: Color(0xFFEF4444),
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Keluar Aplikasi?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Apakah Anda yakin ingin menutup dan keluar dari aplikasi Saldoku?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text(
+                      'Batal',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFEF4444),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Keluar',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ) ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<NavigationProvider>(context);
     final selectedIndex = navigationProvider.selectedIndex;
 
     return PopScope(
-      canPop: selectedIndex == 0,
-      onPopInvoked: (didPop) {
+      canPop: false,
+      onPopInvoked: (didPop) async {
         if (didPop) return;
         
         if (selectedIndex != 0) {
           Future.microtask(() => Provider.of<NavigationProvider>(context, listen: false).setIndex(0));
+        } else {
+          final shouldExit = await _showExitConfirmationDialog(context);
+          if (shouldExit) {
+            SystemNavigator.pop();
+          }
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: FadeIndexedStack(
           index: selectedIndex,
           children: _screens,
@@ -62,7 +156,7 @@ class _MainScreenState extends State<MainScreen> {
         bottomNavigationBar: BottomAppBar(
           shape: const CircularNotchedRectangle(),
           notchMargin: 8,
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           elevation: 16,
           padding: EdgeInsets.zero,
           shadowColor: const Color(0xFF1E60FE).withOpacity(0.12),

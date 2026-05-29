@@ -151,7 +151,6 @@ class _KeamananScreenState extends State<KeamananScreen> {
       child: SwitchListTile(
         value: value,
         onChanged: enabled ? onChanged : null,
-        activeColor: const Color(0xFF1E60FE),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         secondary: Container(
           padding: const EdgeInsets.all(10),

@@ -33,12 +33,13 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F5FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Laporan Bulanan', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0D1C44),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month),
@@ -72,7 +73,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 height: 200,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: PieChart(
@@ -181,7 +182,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(

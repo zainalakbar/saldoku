@@ -10,6 +10,7 @@ import '../../logic/financial_models.dart';
 import '../../transaction_view_screen.dart';
 import '../../transaction_detail_screen.dart';
 import '../../debt_management_screen.dart';
+import '../../add_transaction_sheet.dart';
 
 class TransactionHistorySection extends StatefulWidget {
   const TransactionHistorySection({super.key});
@@ -32,6 +33,13 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
 
   @override
   Widget build(BuildContext context) {
+    final transProvider = Provider.of<TransactionProvider>(context);
+    final finProvider = Provider.of<FinancialProvider>(context);
+
+    final bool hasItems = _isAsetTab 
+        ? transProvider.transactions.isNotEmpty 
+        : finProvider.debts.isNotEmpty;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -60,13 +68,20 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
           child: Container(
             height: 48,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.15)),
+              border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.45), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E60FE).withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: TextField(
               controller: _searchController,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value.toLowerCase();
@@ -74,7 +89,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
               },
               decoration: InputDecoration(
                 hintText: 'Cari transaksi...',
-                hintStyle: const TextStyle(color: Colors.white30, fontSize: 14),
+                hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.35), fontSize: 14),
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF1E90FF), size: 20),
                 suffixIcon: _searchQuery.isNotEmpty 
                   ? IconButton(
@@ -98,7 +113,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
           width: 220,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.15)),
           ),
@@ -117,7 +132,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                     alignment: Alignment.center,
                     child: Text('Transaksi', style: TextStyle(
                       fontWeight: _isAsetTab ? FontWeight.w700 : FontWeight.w500,
-                      color: _isAsetTab ? const Color(0xFF050C1F) : Colors.grey.shade400,
+                      color: _isAsetTab ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
                       fontSize: 14,
                     )),
                   ),
@@ -136,7 +151,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                     alignment: Alignment.center,
                     child: Text('Hutang', style: TextStyle(
                       fontWeight: !_isAsetTab ? FontWeight.w700 : FontWeight.w500,
-                      color: !_isAsetTab ? const Color(0xFF050C1F) : Colors.grey.shade400,
+                      color: !_isAsetTab ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
                       fontSize: 14,
                     )),
                   ),
@@ -148,7 +163,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
         const SizedBox(height: 16),
         
         // Dynamic Label above the list
-        if (_searchQuery.isEmpty)
+        if (_searchQuery.isEmpty && hasItems)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4),
             child: Row(
@@ -163,7 +178,9 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  _isExpanded ? 'Semua Riwayat' : '3 Transaksi Terbaru',
+                  _isExpanded 
+                      ? (_isAsetTab ? 'Semua Riwayat' : 'Semua Catatan Hutang') 
+                      : (_isAsetTab ? '3 Transaksi Terbaru' : '3 Catatan Terbaru'),
                   style: TextStyle(
                     fontSize: 12, 
                     fontWeight: FontWeight.w600, 
@@ -181,7 +198,7 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
         ),
         
         // Expandable "Lihat Semua" Button
-        if (_searchQuery.isEmpty)
+        if (_searchQuery.isEmpty && hasItems)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8),
             child: Align(
@@ -252,7 +269,18 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFF1E60FE).withOpacity(0.15),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -354,10 +382,20 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.08)),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 4))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF1E60FE).withOpacity(0.15),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -432,12 +470,22 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
           ElevatedButton(
             onPressed: () {
               if (buttonLabel == 'Catat Transaksi') {
-                // To be implemented or handled in parent
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => const AddTransactionSheet(),
+                );
+              } else if (buttonLabel == 'Tambah Catatan') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DebtManagementScreen()),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E60FE),
-              foregroundColor: const Color(0xFF050C1F),
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 0,
@@ -452,18 +500,24 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.12)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 16, offset: const Offset(0, 5))],
+          border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.45), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1E60FE).withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: isDashed 
           ? CustomPaint(
               painter: DashedRectPainter(
-                color: const Color(0xFF1E60FE).withOpacity(0.3),
+                color: const Color(0xFF1E60FE).withOpacity(0.45),
                 strokeWidth: 1.2,
                 gap: 6.0,
-                borderRadius: 16.0,
+                borderRadius: 28.0,
               ),
               child: content,
             )

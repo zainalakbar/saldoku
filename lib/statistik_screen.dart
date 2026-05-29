@@ -167,138 +167,213 @@ class _StatistikScreenState extends State<StatistikScreen> {
                   _buildMonthSelector(context, transactionProvider),
                   const SizedBox(height: 24),
                   
-                  // Income & Expense Summary Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context: context,
-                          title: 'Pemasukan',
-                          amount: currencyFormatter.format(monthlyIncome),
-                          icon: Icons.arrow_downward,
-                          color: const Color(0xFF1E60FE),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => TransactionDetailScreen(
-                                type: TransactionType.income, 
-                                title: 'Pemasukan $monthName',
-                                month: selectedMonth,
-                                year: selectedYear,
-                              )),
-                            );
-                          },
+                  if (monthlyIncome == 0 && monthlyExpense == 0)
+                    _buildEmptyState(context, monthName, selectedYear.toString())
+                  else ...[
+                    // Income & Expense Summary Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildSummaryCard(
+                            context: context,
+                            title: 'Pemasukan',
+                            amount: currencyFormatter.format(monthlyIncome),
+                            icon: Icons.arrow_downward,
+                            color: const Color(0xFF1E60FE),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => TransactionDetailScreen(
+                                  type: TransactionType.income, 
+                                  title: 'Pemasukan $monthName',
+                                  month: selectedMonth,
+                                  year: selectedYear,
+                                )),
+                              );
+                            },
+                          ),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildSummaryCard(
+                            context: context,
+                            title: 'Pengeluaran',
+                            amount: currencyFormatter.format(monthlyExpense),
+                            icon: Icons.arrow_upward,
+                            color: const Color(0xFFE53935),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => TransactionDetailScreen(
+                                  type: TransactionType.expense, 
+                                  title: 'Pengeluaran $monthName',
+                                  month: selectedMonth,
+                                  year: selectedYear,
+                                )),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Top Expenses Section
+                    if (topCategories.isNotEmpty) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Kategori Terboros', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                          Text('Top 3', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context: context,
-                          title: 'Pengeluaran',
-                          amount: currencyFormatter.format(monthlyExpense),
-                          icon: Icons.arrow_upward,
-                          color: const Color(0xFFE53935),
+                      const SizedBox(height: 16),
+                      ...topCategories.map((entry) {
+                        final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == entry.key, orElse: () => AppCategories.expenseCategories.last);
+                        final percentage = monthlyExpense > 0 ? (entry.value / monthlyExpense) * 100 : 0.0;
+                        return GestureDetector(
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) => TransactionDetailScreen(
                                 type: TransactionType.expense, 
-                                title: 'Pengeluaran $monthName',
+                                title: entry.key,
+                                categoryName: entry.key,
                                 month: selectedMonth,
                                 year: selectedYear,
                               )),
                             );
                           },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Top Expenses Section
-                  if (topCategories.isNotEmpty) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Kategori Terboros', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
-                        Text('Top 3', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ...topCategories.map((entry) {
-                      final cat = AppCategories.expenseCategories.firstWhere((c) => c.name == entry.key, orElse: () => AppCategories.expenseCategories.last);
-                      final percentage = monthlyExpense > 0 ? (entry.value / monthlyExpense) * 100 : 0.0;
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => TransactionDetailScreen(
-                              type: TransactionType.expense, 
-                              title: entry.key,
-                              categoryName: entry.key,
-                              month: selectedMonth,
-                              year: selectedYear,
-                            )),
-                          );
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 10, offset: const Offset(0, 4))],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(color: cat.color.withOpacity(0.1), shape: BoxShape.circle),
-                                child: Icon(cat.icon, color: cat.color, size: 16),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                    Text('${percentage.toStringAsFixed(0)}% dari total belanja', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                                  ],
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.06),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
                                 ),
-                              ),
-                              Text(currencyFormatter.format(entry.value), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                            ],
+                                BoxShadow(
+                                  color: const Color(0xFF1E60FE).withOpacity(0.15),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(color: cat.color.withOpacity(0.1), shape: BoxShape.circle),
+                                  child: Icon(cat.icon, color: cat.color, size: 16),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                      Text('${percentage.toStringAsFixed(0)}% dari total belanja', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                    ],
+                                  ),
+                                ),
+                                Text(currencyFormatter.format(entry.value), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                    const SizedBox(height: 16),
+                        );
+                      }).toList(),
+                      const SizedBox(height: 16),
+                    ],
+                    
+                    const SizedBox(height: 8),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Weekly Analysis Section
+                    _buildWeeklyComparison(context, thisWeekTotal, lastWeekTotal, weeklyDiff, weeklyChangePercent),
+                    const SizedBox(height: 24),
+                    
+                    // Budget Status Section
+                    _buildBudgetStatus(context),
+                    const SizedBox(height: 32),
+                    
+                    // Financial Insights
+                    _buildFinancialPlanner(context, financialProvider, monthlyIncome, monthlyExpense, avgMonthlyExpense),
+                    const SizedBox(height: 32),
+
+                    _buildTrendChart(context),
+                    const SizedBox(height: 40),
+
+                    // Category Distribution
+                    _buildExpensePieChart(context),
+                    const SizedBox(height: 40),
                   ],
-                  
-                  const SizedBox(height: 8),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Weekly Analysis Section
-                  _buildWeeklyComparison(context, thisWeekTotal, lastWeekTotal, weeklyDiff, weeklyChangePercent),
-                  const SizedBox(height: 24),
-                  
-                  // Budget Status Section
-                  _buildBudgetStatus(context),
-                  const SizedBox(height: 32),
-                  
-                  // Financial Insights
-                  _buildFinancialPlanner(context, financialProvider, monthlyIncome, monthlyExpense, avgMonthlyExpense),
-                  const SizedBox(height: 32),
-
-                  _buildTrendChart(context),
-                  const SizedBox(height: 40),
-
-                  // Category Distribution
-                  _buildExpensePieChart(context),
-                  const SizedBox(height: 40),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, String monthName, String yearName) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: const Color(0xFF1E60FE).withOpacity(0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E60FE).withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.query_stats_rounded,
+              size: 64,
+              color: Color(0xFF1E60FE),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Belum Ada Transaksi',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Catat transaksi pemasukan atau pengeluaran pada bulan $monthName $yearName untuk melihat analisa statistik keuangan Anda.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              height: 1.5,
             ),
           ),
         ],
@@ -428,8 +503,19 @@ class _StatistikScreenState extends State<StatistikScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E2C) : Colors.white,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, 8))],
-            border: Border.all(color: isSaving ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1)),
+            border: Border.all(
+              color: isSaving 
+                  ? Colors.green.withOpacity(0.35) 
+                  : Colors.red.withOpacity(0.35), 
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (isSaving ? Colors.green : Colors.red).withOpacity(0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              )
+            ],
           ),
           child: Column(
             children: [
@@ -550,8 +636,14 @@ class _StatistikScreenState extends State<StatistikScreen> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-                  border: Border.all(color: statusColor.withOpacity(0.1), width: 1),
+                  border: Border.all(color: statusColor.withOpacity(0.45), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: statusColor.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
@@ -611,7 +703,14 @@ class _StatistikScreenState extends State<StatistikScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8))],
+        border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.45), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E60FE).withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -650,7 +749,18 @@ class _StatistikScreenState extends State<StatistikScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: const Color(0xFF1E60FE).withOpacity(0.15),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -700,7 +810,18 @@ class _StatistikScreenState extends State<StatistikScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: const Color(0xFF1E60FE).withOpacity(0.15),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -847,7 +968,18 @@ class _StatistikScreenState extends State<StatistikScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: const Color(0xFF1E60FE).withOpacity(0.15),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: const Center(child: Text('Belum ada data pengeluaran bulan ini', style: TextStyle(color: Colors.grey))),
           );
@@ -858,7 +990,18 @@ class _StatistikScreenState extends State<StatistikScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: const Color(0xFF1E60FE).withOpacity(0.15),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1050,7 +1193,14 @@ class _StatistikScreenState extends State<StatistikScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.blue.withOpacity(0.1)),
+              border: Border.all(color: const Color(0xFF1E60FE).withOpacity(0.45), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E60FE).withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                )
+              ],
             ),
             child: Row(
               children: [
@@ -1128,7 +1278,18 @@ class _StatistikScreenState extends State<StatistikScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: const Color(0xFF1E60FE).withOpacity(0.15),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

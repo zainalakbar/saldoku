@@ -152,9 +152,11 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
         right: 24,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? Theme.of(context).scaffoldBackgroundColor 
+            : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Form(
         key: _formKey,
@@ -167,13 +169,18 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Catat Transaksi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                  Text('Catat Transaksi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
-                      child: const Icon(Icons.close, size: 18, color: Colors.grey),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark 
+                            ? Theme.of(context).colorScheme.surface 
+                            : Colors.grey.shade100, 
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.close, size: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                     ),
                   ),
                 ],
@@ -184,7 +191,9 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF2F5FB),
+                  color: Theme.of(context).brightness == Brightness.dark 
+                      ? Theme.of(context).colorScheme.surface 
+                      : const Color(0xFFF2F5FB),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -199,19 +208,52 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
               // Amount Input
               const Text('Nominal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
               const SizedBox(height: 8),
-              TextFormField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44)),
-                decoration: const InputDecoration(
-                  prefixText: 'Rp ',
-                  prefixStyle: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44)),
-                  border: InputBorder.none,
-                  hintText: '0',
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1E60FE).withOpacity(0.18),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                validator: (value) => value!.isEmpty ? 'Masukkan nominal' : null,
+                child: TextFormField(
+                  controller: _amountController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                  decoration: InputDecoration(
+                    prefixText: 'Rp ',
+                    prefixStyle: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark 
+                        ? Theme.of(context).colorScheme.surface 
+                        : const Color(0xFFF9FAFB),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: const Color(0xFF1E60FE).withOpacity(0.45), width: 1.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(color: const Color(0xFF1E60FE), width: 1.5),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                    ),
+                    hintText: '0',
+                    hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
+                  ),
+                  validator: (value) => value!.isEmpty ? 'Masukkan nominal' : null,
+                ),
               ),
-              const Divider(thickness: 1.2),
               const SizedBox(height: 24),
 
               // Description
@@ -221,10 +263,12 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   hintText: _type == TransactionType.expense ? 'Beli apa hari ini?' : 'Dapat uang dari mana?',
-                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
                   filled: true,
-                  fillColor: const Color(0xFFF9FAFB),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderBorderSide.none),
+                  fillColor: Theme.of(context).brightness == Brightness.dark 
+                      ? Theme.of(context).colorScheme.surface 
+                      : const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
                 validator: (value) => value!.isEmpty ? 'Masukkan keterangan' : null,
@@ -252,21 +296,23 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
+                      color: Theme.of(context).brightness == Brightness.dark 
+                          ? Theme.of(context).colorScheme.surface 
+                          : const Color(0xFFF9FAFB),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<FinancialAsset>(
                         value: _selectedAsset,
-                        isExpanded: true,
+                        dropdownColor: Theme.of(context).colorScheme.surface,
                         items: assets.map((asset) {
                           return DropdownMenuItem(
                             value: asset,
                             child: Row(
                               children: [
-                                Icon(Icons.account_balance_wallet_outlined, color: Colors.blue.shade700, size: 18),
+                                Icon(Icons.account_balance_wallet_outlined, color: const Color(0xFF1E60FE), size: 18),
                                 const SizedBox(width: 12),
-                                Text(asset.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                Text(asset.name, style: TextStyle(fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
                               ],
                             ),
                           );
@@ -295,7 +341,9 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? Theme.of(context).colorScheme.surface 
+                                  : const Color(0xFFF9FAFB),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -305,7 +353,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                                 Expanded(
                                   child: Text(
                                     _selectedCategory?.name ?? 'Pilih',
-                                    style: const TextStyle(fontSize: 14, color: Color(0xFF0D1C44), fontWeight: FontWeight.w500),
+                                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -329,7 +377,9 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? Theme.of(context).colorScheme.surface 
+                                  : const Color(0xFFF9FAFB),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -339,7 +389,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                                 Expanded(
                                   child: Text(
                                     DateFormat('dd/MM/yy').format(_selectedDate),
-                                    style: const TextStyle(fontSize: 14, color: Color(0xFF0D1C44), fontWeight: FontWeight.w500),
+                                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500),
                                   ),
                                 ),
                               ],
@@ -372,13 +422,16 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
+                        color: Theme.of(context).brightness == Brightness.dark 
+                            ? Theme.of(context).colorScheme.surface 
+                            : const Color(0xFFF9FAFB),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<FinancialGoal>(
                           value: _selectedGoal,
                           isExpanded: true,
+                          dropdownColor: Theme.of(context).colorScheme.surface,
                           hint: const Text('Pilih Target'),
                           items: goals.map((goal) {
                             return DropdownMenuItem(
@@ -387,7 +440,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                                 children: [
                                   Icon(goal.icon, color: goal.color, size: 18),
                                   const SizedBox(width: 12),
-                                  Text(goal.name),
+                                  Text(goal.name, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                                 ],
                               ),
                             );

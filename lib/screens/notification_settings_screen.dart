@@ -222,7 +222,6 @@ class NotificationSettingsScreen extends StatelessWidget {
             Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: const Color(0xFF1E60FE),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           ],
