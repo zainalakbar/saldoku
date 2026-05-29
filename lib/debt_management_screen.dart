@@ -120,15 +120,29 @@ class _DebtManagementScreenState extends State<DebtManagementScreen> with Single
     final type = _tabController.index == 0 ? DebtType.toMe : DebtType.fromMe;
     final typeName = type == DebtType.toMe ? 'Piutang' : 'Hutang';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20), decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 40, 
+              height: 4, 
+              margin: const EdgeInsets.only(bottom: 20), 
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey.shade700 : Colors.grey.shade300, 
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             Text('Bersihkan Histori $typeName', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             ListTile(

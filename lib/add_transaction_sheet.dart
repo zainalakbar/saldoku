@@ -107,6 +107,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   }
 
   Future<void> _pickDate() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -115,11 +116,19 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF1E60FE),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF0D1C44),
-            ),
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: Color(0xFF1E60FE),
+                    onPrimary: Colors.white,
+                    surface: Color(0xFF0D1530),
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: Color(0xFF1E60FE),
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: Color(0xFF0D1C44),
+                  ),
           ),
           child: child!,
         );
@@ -538,6 +547,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
 
   Widget _buildTypeButton(TransactionType type, String label) {
     final isActive = _type == type;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = type == TransactionType.income ? Colors.green : const Color(0xFFFF5252);
     
     return Expanded(
@@ -553,10 +563,12 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
+            color: isActive 
+                ? (isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.white) 
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             boxShadow: isActive ? [
-              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+              BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.05), blurRadius: 4, offset: const Offset(0, 2))
             ] : null,
           ),
           alignment: Alignment.center,
@@ -576,18 +588,30 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     final categories = _type == TransactionType.income 
         ? AppCategories.incomeCategories 
         : AppCategories.expenseCategories;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         return Container(
+          decoration: BoxDecoration(
+            color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Pilih Kategori', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+              Text(
+                'Pilih Kategori', 
+                style: TextStyle(
+                  fontSize: 18, 
+                  fontWeight: FontWeight.bold, 
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
               const SizedBox(height: 24),
               GridView.builder(
                 shrinkWrap: true,
@@ -616,7 +640,15 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                           child: Icon(cat.icon, color: cat.color, size: 24),
                         ),
                         const SizedBox(height: 8),
-                        Text(cat.name, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+                        Text(
+                          cat.name, 
+                          style: TextStyle(
+                            fontSize: 10, 
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ), 
+                          textAlign: TextAlign.center,
+                        ),
                       ],
                     ),
                   );

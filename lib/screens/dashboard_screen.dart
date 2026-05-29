@@ -702,29 +702,39 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
         
         return Consumer<FinancialProvider>(
           builder: (context, provider, child) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
             return Container(
               padding: const EdgeInsets.only(top: 12, left: 20, right: 20, bottom: 40),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+                    child: Container(
+                      width: 40, height: 4, 
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey.shade700 : Colors.grey.shade300, 
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Target Tabungan', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                      Text('Target Tabungan', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(color: Color(0xFFF3F4F6), shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: isDark ? Theme.of(context).colorScheme.surface : const Color(0xFFF3F4F6), 
+                            shape: BoxShape.circle,
+                          ),
                           child: const Icon(Icons.close, size: 18, color: Colors.grey),
                         ),
                       ),
@@ -754,7 +764,10 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                            decoration: BoxDecoration(
+                              color: isDark ? Theme.of(context).colorScheme.surface : Colors.white, 
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                             child: const Row(
                               children: [
                                 Icon(Icons.add_circle_outline, color: Color(0xFF1E60FE), size: 16),
@@ -777,10 +790,10 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark ? Theme.of(context).colorScheme.surface : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-                          border: Border.all(color: Colors.grey.shade100),
+                          border: Border.all(color: isDark ? Colors.transparent : Colors.grey.shade100),
                         ),
                         child: Column(
                           children: [
@@ -796,7 +809,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(goal.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                                      Text(goal.name, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                                       Text('${(goal.progress * 100).toStringAsFixed(0)}% terkumpul (${currencyFormatter.format(goal.currentAmount)})', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                                     ],
                                   ),
@@ -831,7 +844,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: goal.progress,
-                                backgroundColor: Colors.grey.shade100,
+                                backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
                                 valueColor: AlwaysStoppedAnimation<Color>(goal.color),
                                 minHeight: 6,
                               ),
@@ -863,17 +876,25 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
           padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Container(
             padding: const EdgeInsets.only(top: 12, left: 20, right: 20, bottom: 40),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+                Center(
+                  child: Container(
+                    width: 40, height: 4, 
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade700 : Colors.grey.shade300, 
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 20),
-                const Text('Target Tabungan Baru', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                Text('Target Tabungan Baru', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 24),
                 TextField(
                   controller: nameController,
@@ -942,19 +963,28 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
           builder: (context, budgetProvider, transProvider, child) {
             final allCategories = AppCategories.expenseCategories;
             
+            final isDark = Theme.of(context).brightness == Brightness.dark;
             return Container(
               padding: const EdgeInsets.only(top: 12, left: 20, right: 20, bottom: 40),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+                  Center(
+                    child: Container(
+                      width: 40, height: 4, 
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey.shade700 : Colors.grey.shade300, 
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 20),
-                  const Text('Budget Pengeluaran', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                  Text('Budget Pengeluaran', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   const Text('Atur batas pengeluaran bulananmu', style: TextStyle(fontSize: 13, color: Colors.grey)),
                   const SizedBox(height: 24),
                   
@@ -978,9 +1008,9 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? Theme.of(context).colorScheme.surface : Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.shade100),
+                              border: Border.all(color: isDark ? Colors.transparent : Colors.grey.shade100),
                             ),
                             child: Column(
                               children: [
@@ -996,7 +1026,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(cat.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D1C44))),
+                                          Text(cat.name, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                                           Text(
                                             budget == null 
                                               ? 'Belum ada budget' 
@@ -1018,7 +1048,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                                     borderRadius: BorderRadius.circular(4),
                                     child: LinearProgressIndicator(
                                       value: usage.clamp(0.0, 1.0),
-                                      backgroundColor: Colors.grey.shade100,
+                                      backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
                                       valueColor: AlwaysStoppedAnimation<Color>(isOver ? Colors.red : (usage > 0.8 ? Colors.orange : cat.color)),
                                       minHeight: 6,
                                     ),
